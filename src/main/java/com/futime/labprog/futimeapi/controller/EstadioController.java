@@ -1,15 +1,11 @@
 package com.futime.labprog.futimeapi.controller;
 
-import com.futime.labprog.futimeapi.model.Estadio;
-import com.futime.labprog.futimeapi.repository.EstadioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.futime.labprog.futimeapi.dto.EstadioRequestDTO;
+import com.futime.labprog.futimeapi.dto.EstadioResponseDTO;
+import com.futime.labprog.futimeapi.service.EstadioService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,8 +21,12 @@ import java.util.List;
 
 public class EstadioController {
     
-    @Autowired // Injeção de Dependência. "Encontre o Bean do tipo EstadioRepository e injete uma instância dele na variável".
-    private EstadioRepository estadioRepository;
+    private final EstadioService estadioService;
+
+    // Injeção de Dependência via Construtor
+    public EstadioController(EstadioService estadioService) {
+        this.estadioService = estadioService;
+    }
 
     /**
      * Endpoint para listar todos os estádios cadastrados.
@@ -35,23 +35,67 @@ public class EstadioController {
      * @return Uma lista de todos os estádios.
      */
     @GetMapping // Não passamos nenhum valor, então assume a URL base da classe, ou seja, GET /estadios.
-    public List<Estadio> listarTodos() { // método executado quando a requisição chega
-        return estadioRepository.findAll(); // método herdado de JpaRepository que retorna todos os registros da tabela estadios.
+    public List<EstadioResponseDTO> listarTodos() {
+        return estadioService.listarEstadios();
     }
 
     /**
      * Endpoint para cadastrar um novo estádio.
      * Mapeado para requisições HTTP POST em /estadios.
      *
-     * @param novoEstadio O objeto Estadio enviado no corpo da requisição.
+     * @param novoEstadioDTO O objeto EstadioRequestDTO enviado no corpo da requisição.
      * @return O estádio salvo, incluindo o ID gerado pelo banco.
      */
     @PostMapping // POST /estadios
     @ResponseStatus(HttpStatus.CREATED) // Por padrão, o Spring retorna HTTP status 200 OK para requisições bem sucedidas.
     // A boa prática em APIs REST é retornar 201 Created quando um recurso novo é criado com sucesso.
-    public Estadio criarEstadio(@RequestBody Estadio novoEstadio) { // Pega o corpo da requisição HTTP (JSON), converte em um objeto Estadio e passa para o método
-        return estadioRepository.save(novoEstadio); // salva no banco de dados e retorna a nova entidade salva.
+    public EstadioResponseDTO criarEstadio(@RequestBody EstadioRequestDTO novoEstadioDTO) {
+        return estadioService.criarEstadio(novoEstadioDTO); // salva no banco de dados.
+    }
+
+    /**
+     * Endpoint para buscar um estádio específico pelo seu ID.
+     * Mapeado para requisições HTTP GET em /estadios/{id}
+     *
+     * @param id O ID do estádio passado na URL.
+     * @return O estádio encontrado ou um status 404 Not Found.
+     */
+    @GetMapping("/{id}") // GET /estadios/{id}
+    public ResponseEntity<EstadioResponseDTO> buscarPorId(@PathVariable("id") Integer id) {
+        return estadioService.buscarEstadioPorId(id)
+                .map(ResponseEntity::ok) // Se encontrou, retorna 200 OK com o DTO
+                .orElse(ResponseEntity.notFound().build()); // Se não, retorna 404
+    }
+    // ResponseEntity é o ideal para representar a resposta HTTP completa, não apenas o conteúdo dela (Body + Status Code + Headers).
+    
+    /**
+     * Endpoint para atualizar um estádio existente.
+     * Mapeado para requisições HTTP PUT em /estadios/{id}
+     *
+     * @param id O ID do estádio a ser atualizado (da URL).
+     * @param estadioDetalhes O objeto Estadio com os novos dados (do corpo da requisição).
+     * @return O estádio atualizado ou um status 404 Not Found.
+     */
+    @PutMapping("/{id}") // PUT /estadios/{id}
+    public ResponseEntity<EstadioResponseDTO> atualizarEstadio(@PathVariable("id") Integer id, @RequestBody EstadioRequestDTO estadioDTO) {
+        return estadioService.atualizarEstadio(id, estadioDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
     
-    
+    /**
+     * Endpoint para deletar um estádio pelo seu ID.
+     * Mapeado para requisições HTTP DELETE em /estadios/{id}
+     *
+     * @param id O ID do estádio a ser deletado (da URL).
+     * @return Um status 204 No Content (sucesso) ou 404 Not Found.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deletarEstadio(@PathVariable("id") Integer id) {
+        if (estadioService.deletarEstadio(id)) {
+            return ResponseEntity.noContent().build(); // 204 No Content: boa prática para uma operação DELETE bem sucedida.
+        } else {
+            return ResponseEntity.notFound().build(); // 404 Not Found
+        }
+    }
 }
