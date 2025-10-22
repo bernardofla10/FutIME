@@ -26,8 +26,8 @@ public class Estadio {
     @Column(nullable = false, length = 100)
     private String cidade;
 
-    @Column(nullable = false, length = 2)
-    private String uf; // Unidade Federativa (ex: RJ, SP)
+    @Column(nullable = false, length = 3)
+    private String pais;
 
     /**
      * Construtor padrão exigido pelo JPA.
@@ -40,12 +40,12 @@ public class Estadio {
      *
      * @param nome O nome do estádio.
      * @param cidade A cidade onde o estádio está localizado.
-     * @param uf A sigla do estado (UF).
+     * @param pais O país onde o estádio está localizado.
      */
-    public Estadio(String nome, String cidade, String uf) {
+    public Estadio(String nome, String cidade, String pais) {
         this.nome = nome;
         this.cidade = cidade;
-        this.uf = uf;
+        this.pais = pais;
     }
 
     // Getters e Setters
@@ -73,12 +73,12 @@ public class Estadio {
         this.cidade = cidade;
     }
 
-    public String getUf() {
-        return uf;
+    public String getPais() {
+        return pais;
     }
 
-    public void setUf(String uf) {
-        this.uf = uf;
+    public void setPais(String pais) {
+        this.pais = pais;
     }
 
 

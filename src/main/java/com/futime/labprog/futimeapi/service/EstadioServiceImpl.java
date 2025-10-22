@@ -25,11 +25,11 @@ public class EstadioServiceImpl implements EstadioService { // implementar os m�
 
     // Métodos de conversão privados (lógica interna do serviço)
     private EstadioResponseDTO toResponseDTO(Estadio estadio) {
-        return new EstadioResponseDTO(estadio.getId(), estadio.getNome(), estadio.getCidade(), estadio.getUf());
+        return new EstadioResponseDTO(estadio.getId(), estadio.getNome(), estadio.getCidade(), estadio.getPais());
     } // Converte o "ingrediente cru" (Entidade Estadio) no "prato pronto" (ResponseDTO).
 
     private Estadio toEntity(EstadioRequestDTO dto) {
-        return new Estadio(dto.nome(), dto.cidade(), dto.uf());
+        return new Estadio(dto.nome(), dto.cidade(), dto.pais());
     } // // Converte a "comanda" (RequestDTO) no "ingrediente cru" (Entidade Estadio).
 
     @Override // sobrescrevendo um método da interface
@@ -73,7 +73,7 @@ public class EstadioServiceImpl implements EstadioService { // implementar os m�
                     // 3. Atualiza os dados do ingrediente existente com os dados da "comanda" (RequestDTO).
                     estadioExistente.setNome(estadioDTO.nome());
                     estadioExistente.setCidade(estadioDTO.cidade());
-                    estadioExistente.setUf(estadioDTO.uf());
+                    estadioExistente.setPais(estadioDTO.pais());
                     
                     // 4. Manda o Almoxarife (Repository) salvar o ingrediente atualizado.
                     Estadio estadioAtualizado = estadioRepository.save(estadioExistente);

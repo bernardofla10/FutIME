@@ -6,5 +6,5 @@ package com.futime.labprog.futimeapi.dto;
 public record EstadioRequestDTO(
     String nome,
     String cidade,
-    String uf
+    String pais
 ) {}

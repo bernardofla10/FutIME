@@ -6,5 +6,5 @@ public record EstadioResponseDTO(
     Integer id,
     String nome,
     String cidade,
-    String uf
+    String pais
 ) {}
