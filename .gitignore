@@ -35,3 +35,4 @@ out/
 
 ### VS Code ###
 .vscode/
+>>>>>>> fbe1a83 (chore(backend): inicia configuração do projeto Spring Boot)
