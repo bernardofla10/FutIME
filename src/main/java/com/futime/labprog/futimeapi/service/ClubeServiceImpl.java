@@ -6,6 +6,7 @@ import com.futime.labprog.futimeapi.dto.EstadioResponseDTO;
 import com.futime.labprog.futimeapi.model.Clube;
 import com.futime.labprog.futimeapi.model.Estadio;
 import com.futime.labprog.futimeapi.repository.ClubeRepository;
+import com.futime.labprog.futimeapi.repository.CompeticaoRepository;
 import com.futime.labprog.futimeapi.repository.EstadioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +23,15 @@ public class ClubeServiceImpl implements ClubeService {
     private final ClubeRepository clubeRepository;
     // O "Almoxarife" de Estádios, necessário para a associação
     private final EstadioRepository estadioRepository;
+    // Para atualizar competições quando um clube é removido
+    private final CompeticaoRepository competicaoRepository;
 
     // Injeção de *ambas* as dependências via construtor (Padrão FutIME / SOLID-D)
     //
-    public ClubeServiceImpl(ClubeRepository clubeRepository, EstadioRepository estadioRepository) {
+    public ClubeServiceImpl(ClubeRepository clubeRepository, EstadioRepository estadioRepository, CompeticaoRepository competicaoRepository) {
         this.clubeRepository = clubeRepository;
         this.estadioRepository = estadioRepository;
+        this.competicaoRepository = competicaoRepository;
     } // precisa do ClubeRepository (para salvar o clube) e do EstadioRepository (para encontrar o estádio que será associado).
 
     // --- MÉTODOS DE TRADUÇÃO (PRIVADOS) ---
@@ -126,10 +130,21 @@ public class ClubeServiceImpl implements ClubeService {
     @Override
     @Transactional
     public boolean deletarClube(Integer id) {
-        if (clubeRepository.existsById(id)) {
-            clubeRepository.deleteById(id);
-            return true;
+        if (!clubeRepository.existsById(id)) {
+            return false;
         }
-        return false;
+
+        // Remove associações nas competições (tabela de junção) antes de deletar o clube
+        competicaoRepository.findByClubes_Id(id).forEach(competicao -> {
+            if (competicao.getClubes() != null) {
+                competicao.getClubes().removeIf(c -> c.getId() != null && c.getId().equals(id));
+            }
+            // salvar para sincronizar a remoção na join table
+            // JpaRepository de Competicao está transacional, save aqui garante flush da associação
+            competicaoRepository.save(competicao);
+        });
+
+        clubeRepository.deleteById(id);
+        return true;
     }
 }

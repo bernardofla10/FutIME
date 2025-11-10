@@ -1,10 +1,13 @@
+
 package com.futime.labprog.futimeapi.service;
 
 import com.futime.labprog.futimeapi.dto.ClubeResponseDTO;
+import com.futime.labprog.futimeapi.dto.EstadioResponseDTO;
 import com.futime.labprog.futimeapi.dto.CompeticaoRequestDTO;
 import com.futime.labprog.futimeapi.dto.CompeticaoResponseDTO;
 import com.futime.labprog.futimeapi.model.Clube;
 import com.futime.labprog.futimeapi.model.Competicao;
+import com.futime.labprog.futimeapi.model.Estadio;
 import com.futime.labprog.futimeapi.repository.ClubeRepository;
 import com.futime.labprog.futimeapi.repository.CompeticaoRepository;
 import org.springframework.stereotype.Service;
@@ -39,14 +42,27 @@ public class CompeticaoServiceImpl implements CompeticaoService {
         List<ClubeResponseDTO> clubesDTO = null;
         if (competicao.getClubes() != null && !competicao.getClubes().isEmpty()) {
             clubesDTO = competicao.getClubes().stream()
-                    .map(clube -> new ClubeResponseDTO(
-                            clube.getId(),
-                            clube.getNome(),
-                            clube.getSigla(),
-                            clube.getCidade(),
-                            clube.getPais(),
-                            null // Não incluímos o estádio para evitar recursão infinita
-                    ))
+                    .map(clube -> {
+                        EstadioResponseDTO estadioDTO = null;
+                        if (clube.getEstadio() != null) {
+                            Estadio estadio = clube.getEstadio();
+                            estadioDTO = new EstadioResponseDTO(
+                                    estadio.getId(),
+                                    estadio.getNome(),
+                                    estadio.getCidade(),
+                                    estadio.getPais()
+                            );
+                        }
+
+                        return new ClubeResponseDTO(
+                                clube.getId(),
+                                clube.getNome(),
+                                clube.getSigla(),
+                                clube.getCidade(),
+                                clube.getPais(),
+                                estadioDTO
+                        );
+                    })
                     .collect(Collectors.toList());
         }
 
