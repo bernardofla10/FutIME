@@ -1,18 +1,10 @@
 package com.futime.labprog.futimeapi.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import java.time.LocalDate; // Para data de nascimento
+import jakarta.persistence.*; // Importação completa
+import java.time.LocalDate;
+import java.util.ArrayList; // ADICIONADO
+import java.util.List;
 
-/**
- * Representa a entidade Jogador no banco de dados.
- */
 @Entity
 @Table(name = "jogadores")
 public class Jogador {
@@ -24,23 +16,32 @@ public class Jogador {
     private String nomeCompleto;
     private String apelido;
     private LocalDate dataNascimento;
-    private String posicao; // Ex: Atacante, Goleiro, Meio-campo
+    private String posicao;
 
-    /**
-     * Relacionamento Muitos-para-Um com Clube.
-     * Muitos jogadores pertencem a um clube.
-     */
-    @ManyToOne(fetch = FetchType.LAZY) // LAZY continua sendo boa prática
-    @JoinColumn(name = "clube_id", referencedColumnName = "id") // Chave estrangeira na tabela 'jogadores'
+    // NOVO CAMPO: Atributo simples
+    private Double valorDeMercado; // Usar Double ou BigDecimal para valores monetários
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "clube_id", referencedColumnName = "id")
     private Clube clube;
 
+    // NOVA RELAÇÃO: Um Jogador tem Muitas folhas de estatísticas
     /**
-     * Construtor padrão exigido pelo JPA.
+     * Relacionamento Um-para-Muitos com as estatísticas do jogador.
+     * 'mappedBy = "jogador"' indica que a entidade EstatisticasJogadorCompeticao
+     * é a "dona" deste relacionamento (ela possui a chave estrangeira).
+     * cascade = CascadeType.ALL: Se um jogador for deletado, suas estatísticas
+     * relacionadas também serão.
+     * orphanRemoval = true: Se uma estatística for removida da lista deste jogador,
+     * ela será deletada do banco.
      */
+    @OneToMany(mappedBy = "jogador", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<EstatisticasJogadorCompeticao> estatisticas = new ArrayList<>(); // ATUALIZADO
+
     public Jogador() {
     }
 
-    // Getters e Setters
+    // Getters e Setters atualizados/adicionados
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getNomeCompleto() { return nomeCompleto; }
@@ -54,6 +55,13 @@ public class Jogador {
     public Clube getClube() { return clube; }
     public void setClube(Clube clube) { this.clube = clube; }
 
-    // TODO: Implementar equals() e hashCode() baseados apenas no 'id'
-    //.
+    // Getter/Setter para valorDeMercado
+    public Double getValorDeMercado() { return valorDeMercado; }
+    public void setValorDeMercado(Double valorDeMercado) { this.valorDeMercado = valorDeMercado; }
+
+    // Getter/Setter para a nova coleção de estatísticas
+    public List<EstatisticasJogadorCompeticao> getEstatisticas() { return estatisticas; }
+    public void setEstatisticas(List<EstatisticasJogadorCompeticao> estatisticas) { this.estatisticas = estatisticas; }
+    
+    // TODO: Implementar equals() e hashCode()
 }

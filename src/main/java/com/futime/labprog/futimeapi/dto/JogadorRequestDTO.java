@@ -11,5 +11,6 @@ public record JogadorRequestDTO(
     String apelido,
     LocalDate dataNascimento,
     String posicao,
-    Integer clubeId // Apenas o ID do clube
+    Integer clubeId,
+    Double valorDeMercado
 ) {}
