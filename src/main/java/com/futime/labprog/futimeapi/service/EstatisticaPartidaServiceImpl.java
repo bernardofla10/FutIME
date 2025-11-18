@@ -66,9 +66,9 @@ public class EstatisticaPartidaServiceImpl implements EstatisticaPartidaService 
     @Transactional
     public EstatisticaPartidaResponseDTO salvar(Integer jogadorId, Integer partidaId, EstatisticaPartidaRequestDTO dto) {
         Jogador jogador = jogadorRepository.findById(jogadorId)
-                .orElseThrow(() -> new EntityNotFoundException(\"Jogador ID \" + jogadorId + \" não encontrado\"));
+                .orElseThrow(() -> new EntityNotFoundException("Jogador ID \" + jogadorId + \" não encontrado"));
         Partida partida = partidaRepository.findById(partidaId)
-                .orElseThrow(() -> new EntityNotFoundException(\"Partida ID \" + partidaId + \" não encontrada\"));
+                .orElseThrow(() -> new EntityNotFoundException("Partida ID \" + partidaId + \" não encontrada"));
 
         JogadorEstatisticaPartida entity = estatisticaRepository.findByJogador_IdAndPartida_Id(jogadorId, partidaId)
                 .orElseGet(() -> {

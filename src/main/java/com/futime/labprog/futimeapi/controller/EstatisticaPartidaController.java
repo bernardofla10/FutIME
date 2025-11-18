@@ -17,7 +17,7 @@ public class EstatisticaPartidaController {
         this.service = service;
     }
 
-    @PostMapping(\"/jogadores/{jogadorId}/partidas/{partidaId}/estatisticas\")
+    @PostMapping("/jogadores/{jogadorId}/partidas/{partidaId}/estatisticas")
     @ResponseStatus(HttpStatus.CREATED)
     public EstatisticaPartidaResponseDTO salvar(@PathVariable Integer jogadorId,
                                                 @PathVariable Integer partidaId,
@@ -25,17 +25,17 @@ public class EstatisticaPartidaController {
         return service.salvar(jogadorId, partidaId, dto);
     }
 
-    @GetMapping(\"/jogadores/{jogadorId}/partidas/estatisticas\")
+    @GetMapping("/jogadores/{jogadorId}/partidas/estatisticas")
     public List<EstatisticaPartidaResponseDTO> listarPorJogador(@PathVariable Integer jogadorId) {
         return service.listarPorJogador(jogadorId);
     }
 
-    @GetMapping(\"/estatisticas-partida/{id}\")
+    @GetMapping("/estatisticas-partida/{id}")
     public ResponseEntity<EstatisticaPartidaResponseDTO> buscarPorId(@PathVariable Integer id) {
         return service.buscarPorId(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping(\"/estatisticas-partida/{id}\")
+    @DeleteMapping("/estatisticas-partida/{id}")
     public ResponseEntity<Object> deletar(@PathVariable Integer id) {
         return service.deletar(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
