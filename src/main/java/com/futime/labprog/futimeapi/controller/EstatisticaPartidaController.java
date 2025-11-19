@@ -3,12 +3,15 @@ package com.futime.labprog.futimeapi.controller;
 import com.futime.labprog.futimeapi.dto.EstatisticaPartidaRequestDTO;
 import com.futime.labprog.futimeapi.dto.EstatisticaPartidaResponseDTO;
 import com.futime.labprog.futimeapi.service.EstatisticaPartidaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/estatisticas-partida")
+@Tag(name = "Estatísticas de Partidas", description = "Gerenciamento de estatísticas de partidas")
 public class EstatisticaPartidaController {
 
     private final EstatisticaPartidaService service;
@@ -20,8 +23,8 @@ public class EstatisticaPartidaController {
     @PostMapping("/jogadores/{jogadorId}/partidas/{partidaId}/estatisticas")
     @ResponseStatus(HttpStatus.CREATED)
     public EstatisticaPartidaResponseDTO salvar(@PathVariable Integer jogadorId,
-                                                @PathVariable Integer partidaId,
-                                                @RequestBody EstatisticaPartidaRequestDTO dto) {
+            @PathVariable Integer partidaId,
+            @RequestBody EstatisticaPartidaRequestDTO dto) {
         return service.salvar(jogadorId, partidaId, dto);
     }
 
@@ -40,5 +43,3 @@ public class EstatisticaPartidaController {
         return service.deletar(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
-
-

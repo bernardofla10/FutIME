@@ -8,43 +8,33 @@ import com.futime.labprog.futimeapi.model.Estadio;
 import com.futime.labprog.futimeapi.repository.ClubeRepository;
 import com.futime.labprog.futimeapi.repository.CompeticaoRepository;
 import com.futime.labprog.futimeapi.repository.EstadioRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException; // Usaremos para tratar erros
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class ClubeServiceImpl implements ClubeService {
 
-    // O "Almoxarife" de Clubes
     private final ClubeRepository clubeRepository;
-    // O "Almoxarife" de Estádios, necessário para a associação
     private final EstadioRepository estadioRepository;
-    // Para atualizar competições quando um clube é removido
     private final CompeticaoRepository competicaoRepository;
 
-    // Injeção de *ambas* as dependências via construtor (Padrão FutIME / SOLID-D)
-    //
-    public ClubeServiceImpl(ClubeRepository clubeRepository, EstadioRepository estadioRepository, CompeticaoRepository competicaoRepository) {
+    public ClubeServiceImpl(ClubeRepository clubeRepository, EstadioRepository estadioRepository,
+            CompeticaoRepository competicaoRepository) {
         this.clubeRepository = clubeRepository;
         this.estadioRepository = estadioRepository;
         this.competicaoRepository = competicaoRepository;
-    } // precisa do ClubeRepository (para salvar o clube) e do EstadioRepository (para encontrar o estádio que será associado).
+    }
 
-    // --- MÉTODOS DE TRADUÇÃO (PRIVADOS) ---
-
-    // Converte o "ingrediente cru" (Clube) no "prato pronto" (ClubeResponseDTO)
     private ClubeResponseDTO toResponseDTO(Clube clube) {
-        // Lógica de tradução aninhada:
-        // Pega o ingrediente "Estadio" de dentro do "Clube" e o transforma
-        // no "prato pronto" EstadioResponseDTO.
         EstadioResponseDTO estadioDTO = null;
         if (clube.getEstadio() != null) {
             Estadio estadio = clube.getEstadio();
-            estadioDTO = new EstadioResponseDTO(estadio.getId(), estadio.getNome(), estadio.getCidade(), estadio.getPais());
+            estadioDTO = new EstadioResponseDTO(estadio.getId(), estadio.getNome(), estadio.getCidade(),
+                    estadio.getPais());
         }
 
         return new ClubeResponseDTO(
@@ -53,30 +43,26 @@ public class ClubeServiceImpl implements ClubeService {
                 clube.getSigla(),
                 clube.getCidade(),
                 clube.getPais(),
-                estadioDTO // Retorna o DTO aninhado
-        );
+                estadioDTO);
     }
 
-    // Este método agora tem LÓGICA DE NEGÓCIO.
-    // Ele não apenas converte, mas também VALIDA a "comanda" (RequestDTO).
     private Clube toEntity(ClubeRequestDTO dto) {
-        // Lógica de Negócio: Buscar o estádio.
-        // O que acontece se o estadioId não existir?
-        // O .orElseThrow() garante que a operação falhe AGORA (Fail Fast)
-        //
-        Estadio estadio = estadioRepository.findById(dto.estadioId())
-                .orElseThrow(() -> new EntityNotFoundException("Estádio com ID " + dto.estadioId() + " não encontrado."));
+        Estadio estadio = null;
+        if (dto.estadioId() != null) {
+            estadio = estadioRepository.findById(dto.estadioId())
+                    .orElseThrow(
+                            () -> new EntityNotFoundException(
+                                    "Estádio com ID " + dto.estadioId() + " não encontrado."));
+        }
 
         Clube clube = new Clube();
         clube.setNome(dto.nome());
         clube.setSigla(dto.sigla());
         clube.setCidade(dto.cidade());
         clube.setPais(dto.pais());
-        clube.setEstadio(estadio); // Associa a ENTIDADE Estadio
+        clube.setEstadio(estadio);
         return clube;
     }
-
-    // --- MÉTODOS PÚBLICOS (O CONTRATO) ---
 
     @Override
     @Transactional(readOnly = true)
@@ -88,63 +74,57 @@ public class ClubeServiceImpl implements ClubeService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<ClubeResponseDTO> buscarClubePorId(Integer id) {
-        return clubeRepository.findById(id).map(this::toResponseDTO);
+    public ClubeResponseDTO buscarClubePorId(Integer id) {
+        return clubeRepository.findById(id)
+                .map(this::toResponseDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com ID: " + id));
     }
 
     @Override
     @Transactional
     public ClubeResponseDTO criarClube(ClubeRequestDTO clubeDTO) {
-        // 1. Converte a "comanda" (DTO) em "ingrediente" (Entidade)
-        //    (O método toEntity() já faz a busca e validação do Estádio)
         Clube novoClube = toEntity(clubeDTO);
-        
-        // 2. Salva o novo ingrediente
         Clube clubeSalvo = clubeRepository.save(novoClube);
-        
-        // 3. Converte o ingrediente salvo no "prato pronto"
         return toResponseDTO(clubeSalvo);
     }
 
     @Override
     @Transactional
-    public Optional<ClubeResponseDTO> atualizarClube(Integer id, ClubeRequestDTO clubeDTO) {
-        return clubeRepository.findById(id)
-                .map(clubeExistente -> {
-                    // Busca a *nova* entidade Estadio
-                    Estadio novoEstadio = estadioRepository.findById(clubeDTO.estadioId())
-                            .orElseThrow(() -> new EntityNotFoundException("Estádio com ID " + clubeDTO.estadioId() + " não encontrado."));
+    public ClubeResponseDTO atualizarClube(Integer id, ClubeRequestDTO clubeDTO) {
+        Clube clubeExistente = clubeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com ID: " + id));
 
-                    // Atualiza os campos do clube existente
-                    clubeExistente.setNome(clubeDTO.nome());
-                    clubeExistente.setSigla(clubeDTO.sigla());
-                    clubeExistente.setCidade(clubeDTO.cidade());
-                    clubeExistente.setPais(clubeDTO.pais());
-                    clubeExistente.setEstadio(novoEstadio); // Associa o novo estádio
+        Estadio novoEstadio = null;
+        if (clubeDTO.estadioId() != null) {
+            novoEstadio = estadioRepository.findById(clubeDTO.estadioId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Estádio com ID " + clubeDTO.estadioId() + " não encontrado."));
+        }
 
-                    Clube clubeAtualizado = clubeRepository.save(clubeExistente);
-                    return toResponseDTO(clubeAtualizado);
-                });
+        clubeExistente.setNome(clubeDTO.nome());
+        clubeExistente.setSigla(clubeDTO.sigla());
+        clubeExistente.setCidade(clubeDTO.cidade());
+        clubeExistente.setPais(clubeDTO.pais());
+        clubeExistente.setEstadio(novoEstadio);
+
+        Clube clubeAtualizado = clubeRepository.save(clubeExistente);
+        return toResponseDTO(clubeAtualizado);
     }
 
     @Override
     @Transactional
-    public boolean deletarClube(Integer id) {
+    public void deletarClube(Integer id) {
         if (!clubeRepository.existsById(id)) {
-            return false;
+            throw new EntityNotFoundException("Clube não encontrado com ID: " + id);
         }
 
-        // Remove associações nas competições (tabela de junção) antes de deletar o clube
         competicaoRepository.findByClubes_Id(id).forEach(competicao -> {
             if (competicao.getClubes() != null) {
                 competicao.getClubes().removeIf(c -> c.getId() != null && c.getId().equals(id));
             }
-            // salvar para sincronizar a remoção na join table
-            // JpaRepository de Competicao está transacional, save aqui garante flush da associação
             competicaoRepository.save(competicao);
         });
 
         clubeRepository.deleteById(id);
-        return true;
     }
 }

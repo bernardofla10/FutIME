@@ -12,7 +12,6 @@ import com.futime.labprog.futimeapi.repository.EstadioRepository;
 import com.futime.labprog.futimeapi.repository.PartidaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,8 @@ public class PartidaServiceImpl implements PartidaService {
     private final ClubeRepository clubeRepository;
     private final EstadioRepository estadioRepository;
 
-    public PartidaServiceImpl(PartidaRepository partidaRepository, ClubeRepository clubeRepository, EstadioRepository estadioRepository) {
+    public PartidaServiceImpl(PartidaRepository partidaRepository, ClubeRepository clubeRepository,
+            EstadioRepository estadioRepository) {
         this.partidaRepository = partidaRepository;
         this.clubeRepository = clubeRepository;
         this.estadioRepository = estadioRepository;
@@ -39,7 +39,8 @@ public class PartidaServiceImpl implements PartidaService {
         if (clube.getEstadio() != null) {
             estadioDTO = toEstadioDTO(clube.getEstadio());
         }
-        return new ClubeResponseDTO(clube.getId(), clube.getNome(), clube.getSigla(), clube.getCidade(), clube.getPais(), estadioDTO);
+        return new ClubeResponseDTO(clube.getId(), clube.getNome(), clube.getSigla(), clube.getCidade(),
+                clube.getPais(), estadioDTO);
     }
 
     private PartidaResponseDTO toResponseDTO(Partida partida) {
@@ -53,15 +54,16 @@ public class PartidaServiceImpl implements PartidaService {
                 partida.getGolsVisitante(),
                 partida.getDataHora(),
                 partida.getCreatedAt(),
-                partida.getUpdatedAt()
-        );
+                partida.getUpdatedAt());
     }
 
     private Partida toEntity(PartidaRequestDTO dto) {
         Clube mandante = clubeRepository.findById(dto.mandanteId())
-                .orElseThrow(() -> new EntityNotFoundException("Clube mandante ID " + dto.mandanteId() + " não encontrado"));
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Clube mandante ID " + dto.mandanteId() + " não encontrado"));
         Clube visitante = clubeRepository.findById(dto.visitanteId())
-                .orElseThrow(() -> new EntityNotFoundException("Clube visitante ID " + dto.visitanteId() + " não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Clube visitante ID " + dto.visitanteId() + " não encontrado"));
         Estadio estadio = estadioRepository.findById(dto.estadioId())
                 .orElseThrow(() -> new EntityNotFoundException("Estádio ID " + dto.estadioId() + " não encontrado"));
 
@@ -84,8 +86,10 @@ public class PartidaServiceImpl implements PartidaService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<PartidaResponseDTO> buscarPorId(Integer id) {
-        return partidaRepository.findById(id).map(this::toResponseDTO);
+    public PartidaResponseDTO buscarPorId(Integer id) {
+        return partidaRepository.findById(id)
+                .map(this::toResponseDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Partida não encontrada com ID: " + id));
     }
 
     @Override
@@ -97,32 +101,36 @@ public class PartidaServiceImpl implements PartidaService {
 
     @Override
     @Transactional
-    public Optional<PartidaResponseDTO> atualizarPartida(Integer id, PartidaRequestDTO dto) {
-        return partidaRepository.findById(id).map(existing -> {
-            Clube mandante = clubeRepository.findById(dto.mandanteId())
-                    .orElseThrow(() -> new EntityNotFoundException("Clube mandante ID " + dto.mandanteId() + " não encontrado"));
-            Clube visitante = clubeRepository.findById(dto.visitanteId())
-                    .orElseThrow(() -> new EntityNotFoundException("Clube visitante ID " + dto.visitanteId() + " não encontrado"));
-            Estadio estadio = estadioRepository.findById(dto.estadioId())
-                    .orElseThrow(() -> new EntityNotFoundException("Estádio ID " + dto.estadioId() + " não encontrado"));
-            existing.setMandante(mandante);
-            existing.setVisitante(visitante);
-            existing.setEstadio(estadio);
-            existing.setFase(dto.fase());
-            existing.setGolsMandante(dto.golsMandante());
-            existing.setGolsVisitante(dto.golsVisitante());
-            existing.setDataHora(dto.dataHora());
-            return toResponseDTO(partidaRepository.save(existing));
-        });
+    public PartidaResponseDTO atualizarPartida(Integer id, PartidaRequestDTO dto) {
+        Partida existing = partidaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Partida não encontrada com ID: " + id));
+
+        Clube mandante = clubeRepository.findById(dto.mandanteId())
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Clube mandante ID " + dto.mandanteId() + " não encontrado"));
+        Clube visitante = clubeRepository.findById(dto.visitanteId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Clube visitante ID " + dto.visitanteId() + " não encontrado"));
+        Estadio estadio = estadioRepository.findById(dto.estadioId())
+                .orElseThrow(() -> new EntityNotFoundException("Estádio ID " + dto.estadioId() + " não encontrado"));
+
+        existing.setMandante(mandante);
+        existing.setVisitante(visitante);
+        existing.setEstadio(estadio);
+        existing.setFase(dto.fase());
+        existing.setGolsMandante(dto.golsMandante());
+        existing.setGolsVisitante(dto.golsVisitante());
+        existing.setDataHora(dto.dataHora());
+
+        return toResponseDTO(partidaRepository.save(existing));
     }
 
     @Override
     @Transactional
-    public boolean deletarPartida(Integer id) {
-        if (!partidaRepository.existsById(id)) return false;
+    public void deletarPartida(Integer id) {
+        if (!partidaRepository.existsById(id)) {
+            throw new EntityNotFoundException("Partida não encontrada com ID: " + id);
+        }
         partidaRepository.deleteById(id);
-        return true;
     }
 }
-
-
