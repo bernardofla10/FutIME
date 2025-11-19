@@ -53,9 +53,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioResponseDTO definirClubeFavorito(Integer usuarioId, Integer clubeId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + usuarioId));
         Clube clube = clubeRepository.findById(clubeId)
-                .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com ID: " + clubeId));
 
         usuario.setClubeFavorito(clube);
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
@@ -66,9 +66,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioResponseDTO adicionarJogadorObservado(Integer usuarioId, Integer jogadorId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + usuarioId));
         Jogador jogador = jogadorRepository.findById(jogadorId)
-                .orElseThrow(() -> new EntityNotFoundException("Jogador não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Jogador não encontrado com ID: " + jogadorId));
 
         if (usuario.getJogadoresObservados() == null) {
             usuario.setJogadoresObservados(new ArrayList<>());
@@ -87,7 +87,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public UsuarioResponseDTO buscarPerfil(Integer usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + usuarioId));
         return toResponseDTO(usuario);
     }
 

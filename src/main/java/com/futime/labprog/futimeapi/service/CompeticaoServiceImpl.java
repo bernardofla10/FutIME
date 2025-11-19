@@ -1,4 +1,3 @@
-
 package com.futime.labprog.futimeapi.service;
 
 import com.futime.labprog.futimeapi.dto.ClubeResponseDTO;
@@ -10,35 +9,25 @@ import com.futime.labprog.futimeapi.model.Competicao;
 import com.futime.labprog.futimeapi.model.Estadio;
 import com.futime.labprog.futimeapi.repository.ClubeRepository;
 import com.futime.labprog.futimeapi.repository.CompeticaoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class CompeticaoServiceImpl implements CompeticaoService {
 
-    // O "Almoxarife" de Competições
     private final CompeticaoRepository competicaoRepository;
-    // O "Almoxarife" de Clubes, necessário para a associação
     private final ClubeRepository clubeRepository;
 
-    // Injeção de *ambas* as dependências via construtor (Padrão FutIME / SOLID-D)
     public CompeticaoServiceImpl(CompeticaoRepository competicaoRepository, ClubeRepository clubeRepository) {
         this.competicaoRepository = competicaoRepository;
         this.clubeRepository = clubeRepository;
     }
 
-    // --- MÉTODOS DE TRADUÇÃO (PRIVADOS) ---
-
-    // Converte o "ingrediente cru" (Competicao) no "prato pronto" (CompeticaoResponseDTO)
     private CompeticaoResponseDTO toResponseDTO(Competicao competicao) {
-        // Lógica de tradução aninhada:
-        // Pega os ingredientes "Clube" de dentro da "Competicao" e os transforma
-        // nos "pratos prontos" ClubeResponseDTO.
         List<ClubeResponseDTO> clubesDTO = null;
         if (competicao.getClubes() != null && !competicao.getClubes().isEmpty()) {
             clubesDTO = competicao.getClubes().stream()
@@ -50,8 +39,7 @@ public class CompeticaoServiceImpl implements CompeticaoService {
                                     estadio.getId(),
                                     estadio.getNome(),
                                     estadio.getCidade(),
-                                    estadio.getPais()
-                            );
+                                    estadio.getPais());
                         }
 
                         return new ClubeResponseDTO(
@@ -60,8 +48,7 @@ public class CompeticaoServiceImpl implements CompeticaoService {
                                 clube.getSigla(),
                                 clube.getCidade(),
                                 clube.getPais(),
-                                estadioDTO
-                        );
+                                estadioDTO);
                     })
                     .collect(Collectors.toList());
         }
@@ -75,16 +62,10 @@ public class CompeticaoServiceImpl implements CompeticaoService {
                 competicao.getTemporada(),
                 clubesDTO,
                 competicao.getCreatedAt(),
-                competicao.getUpdatedAt()
-        );
+                competicao.getUpdatedAt());
     }
 
-    // Este método agora tem LÓGICA DE NEGÓCIO.
-    // Ele não apenas converte, mas também VALIDA a "comanda" (RequestDTO).
     private Competicao toEntity(CompeticaoRequestDTO dto) {
-        // Lógica de Negócio: Buscar os clubes.
-        // O que acontece se algum clubeId não existir?
-        // O .orElseThrow() garante que a operação falhe AGORA (Fail Fast)
         List<Clube> clubes = dto.clubeIds().stream()
                 .map(clubeId -> clubeRepository.findById(clubeId)
                         .orElseThrow(() -> new EntityNotFoundException("Clube com ID " + clubeId + " não encontrado.")))
@@ -96,11 +77,9 @@ public class CompeticaoServiceImpl implements CompeticaoService {
         competicao.setContinente(dto.continente());
         competicao.setTipoCompeticao(dto.tipoCompeticao());
         competicao.setTemporada(dto.temporada());
-        competicao.setClubes(clubes); // Associa a LISTA de ENTIDADES Clube
+        competicao.setClubes(clubes);
         return competicao;
     }
-
-    // --- MÉTODOS PÚBLICOS (O CONTRATO) ---
 
     @Override
     @Transactional(readOnly = true)
@@ -112,55 +91,48 @@ public class CompeticaoServiceImpl implements CompeticaoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<CompeticaoResponseDTO> buscarCompeticaoPorId(Integer id) {
-        return competicaoRepository.findById(id).map(this::toResponseDTO);
+    public CompeticaoResponseDTO buscarCompeticaoPorId(Integer id) {
+        return competicaoRepository.findById(id)
+                .map(this::toResponseDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Competição não encontrada com ID: " + id));
     }
 
     @Override
     @Transactional
     public CompeticaoResponseDTO criarCompeticao(CompeticaoRequestDTO competicaoDTO) {
-        // 1. Converte a "comanda" (DTO) em "ingrediente" (Entidade)
-        //    (O método toEntity() já faz a busca e validação dos Clubes)
         Competicao novaCompeticao = toEntity(competicaoDTO);
-        
-        // 2. Salva o novo ingrediente
         Competicao competicaoSalva = competicaoRepository.save(novaCompeticao);
-        
-        // 3. Converte o ingrediente salvo no "prato pronto"
         return toResponseDTO(competicaoSalva);
     }
 
     @Override
     @Transactional
-    public Optional<CompeticaoResponseDTO> atualizarCompeticao(Integer id, CompeticaoRequestDTO competicaoDTO) {
-        return competicaoRepository.findById(id)
-                .map(competicaoExistente -> {
-                    // Busca as *novas* entidades Clube
-                    List<Clube> novosClubes = competicaoDTO.clubeIds().stream()
-                            .map(clubeId -> clubeRepository.findById(clubeId)
-                                    .orElseThrow(() -> new EntityNotFoundException("Clube com ID " + clubeId + " não encontrado.")))
-                            .collect(Collectors.toList());
+    public CompeticaoResponseDTO atualizarCompeticao(Integer id, CompeticaoRequestDTO competicaoDTO) {
+        Competicao competicaoExistente = competicaoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Competição não encontrada com ID: " + id));
 
-                    // Atualiza os campos da competição existente
-                    competicaoExistente.setNome(competicaoDTO.nome());
-                    competicaoExistente.setPais(competicaoDTO.pais());
-                    competicaoExistente.setContinente(competicaoDTO.continente());
-                    competicaoExistente.setTipoCompeticao(competicaoDTO.tipoCompeticao());
-                    competicaoExistente.setTemporada(competicaoDTO.temporada());
-                    competicaoExistente.setClubes(novosClubes); // Associa os novos clubes
+        List<Clube> novosClubes = competicaoDTO.clubeIds().stream()
+                .map(clubeId -> clubeRepository.findById(clubeId)
+                        .orElseThrow(() -> new EntityNotFoundException("Clube com ID " + clubeId + " não encontrado.")))
+                .collect(Collectors.toList());
 
-                    Competicao competicaoAtualizada = competicaoRepository.save(competicaoExistente);
-                    return toResponseDTO(competicaoAtualizada);
-                });
+        competicaoExistente.setNome(competicaoDTO.nome());
+        competicaoExistente.setPais(competicaoDTO.pais());
+        competicaoExistente.setContinente(competicaoDTO.continente());
+        competicaoExistente.setTipoCompeticao(competicaoDTO.tipoCompeticao());
+        competicaoExistente.setTemporada(competicaoDTO.temporada());
+        competicaoExistente.setClubes(novosClubes);
+
+        Competicao competicaoAtualizada = competicaoRepository.save(competicaoExistente);
+        return toResponseDTO(competicaoAtualizada);
     }
 
     @Override
     @Transactional
-    public boolean deletarCompeticao(Integer id) {
-        if (competicaoRepository.existsById(id)) {
-            competicaoRepository.deleteById(id);
-            return true;
+    public void deletarCompeticao(Integer id) {
+        if (!competicaoRepository.existsById(id)) {
+            throw new EntityNotFoundException("Competição não encontrada com ID: " + id);
         }
-        return false;
+        competicaoRepository.deleteById(id);
     }
 }

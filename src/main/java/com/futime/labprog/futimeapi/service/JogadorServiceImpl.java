@@ -1,20 +1,17 @@
 package com.futime.labprog.futimeapi.service;
 
-import com.futime.labprog.futimeapi.dto.*; // Importa todos os DTOs
+import com.futime.labprog.futimeapi.dto.*;
 import com.futime.labprog.futimeapi.model.Clube;
-import com.futime.labprog.futimeapi.model.EstatisticasJogadorCompeticao; // Importa a nova entidade
+import com.futime.labprog.futimeapi.model.EstatisticasJogadorCompeticao;
 import com.futime.labprog.futimeapi.model.Jogador;
 import com.futime.labprog.futimeapi.repository.ClubeRepository;
 import com.futime.labprog.futimeapi.repository.JogadorRepository;
-// O Repositório de Estatísticas NÃO é necessário aqui (ainda),
-// pois as estatísticas são carregadas via a entidade Jogador (Lazy Loading).
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map; // Para o agrupamento
-import java.util.Optional;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,14 +25,7 @@ public class JogadorServiceImpl implements JogadorService {
                 this.clubeRepository = clubeRepository;
         }
 
-        // --- MÉTODOS DE TRADUÇÃO (PRIVADOS - ATUALIZADOS) ---
-
-        /**
-         * ATUALIZADO: Converte JogadorRequestDTO -> Entidade Jogador
-         * (Agora inclui valorDeMercado)
-         */
         private Jogador toEntity(JogadorRequestDTO dto) {
-                // Lógica de Negócio: Buscar o Clube
                 Clube clube = clubeRepository.findById(dto.clubeId())
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "Clube com ID " + dto.clubeId() + " não encontrado."));
@@ -46,20 +36,12 @@ public class JogadorServiceImpl implements JogadorService {
                 jogador.setDataNascimento(dto.dataNascimento());
                 jogador.setPosicao(dto.posicao());
                 jogador.setClube(clube);
-                jogador.setValorDeMercado(dto.valorDeMercado()); // Adicionado
-                // Note: As estatísticas não são adicionadas aqui. Elas são gerenciadas
-                // separadamente.
+                jogador.setValorDeMercado(dto.valorDeMercado());
                 return jogador;
         }
 
-        /**
-         * ATUALIZADO: Converte Entidade Jogador -> JogadorResponseDTO
-         * (Corrigido para usar List e preencher DTOs atualizados)
-         */
         @Override
         public JogadorResponseDTO toResponseDTO(Jogador jogador) {
-
-                // --- 1. Traduzir o Clube (lógica que já tínhamos) ---
                 ClubeResponseDTO clubeDTO = null;
                 if (jogador.getClube() != null) {
                         Clube clube = jogador.getClube();
@@ -80,10 +62,8 @@ public class JogadorServiceImpl implements JogadorService {
                                         estadioDTO);
                 }
 
-                // --- 2. Processar Estatísticas (LÓGICA ATUALIZADA) ---
-                List<EstatisticasJogadorCompeticao> estatisticas = jogador.getEstatisticas(); // Agora é uma List
+                List<EstatisticasJogadorCompeticao> estatisticas = jogador.getEstatisticas();
 
-                // 2a. Calcular Totais (Gols e Assistências)
                 int golsTotais = estatisticas.stream()
                                 .mapToInt(EstatisticasJogadorCompeticao::getGols)
                                 .sum();
@@ -91,17 +71,15 @@ public class JogadorServiceImpl implements JogadorService {
                                 .mapToInt(EstatisticasJogadorCompeticao::getAssistencias)
                                 .sum();
 
-                // 2b. Mapear Estatísticas por Competição (Tradução ATUALIZADA)
                 List<EstatisticaCompeticaoDTO> estatisticasPorCompeticao = estatisticas.stream()
                                 .map(stat -> new EstatisticaCompeticaoDTO(
                                                 stat.getCompeticao().getNome(),
                                                 stat.getCompeticao().getTemporada(),
-                                                stat.getCompeticao().getTipoCompeticao(), // CAMPO ADICIONADO
+                                                stat.getCompeticao().getTipoCompeticao(),
                                                 stat.getGols(),
                                                 stat.getAssistencias()))
-                                .collect(Collectors.toList()); // ATUALIZADO para toList()
+                                .collect(Collectors.toList());
 
-                // 2c. Calcular Estatísticas por Temporada (Agrupamento)
                 Map<String, List<EstatisticasJogadorCompeticao>> statsAgrupadasPorTemporada = estatisticas.stream()
                                 .collect(Collectors.groupingBy(stat -> stat.getCompeticao().getTemporada()));
 
@@ -120,9 +98,8 @@ public class JogadorServiceImpl implements JogadorService {
                                         return new EstatisticaTemporadaDTO(temporada, golsDaTemporada,
                                                         assistenciasDaTemporada);
                                 })
-                                .collect(Collectors.toList()); // ATUALIZADO para toList()
+                                .collect(Collectors.toList());
 
-                // --- 3. Montar o Response DTO Final ---
                 return new JogadorResponseDTO(
                                 jogador.getId(),
                                 jogador.getNomeCompleto(),
@@ -133,74 +110,63 @@ public class JogadorServiceImpl implements JogadorService {
                                 clubeDTO,
                                 golsTotais,
                                 assistenciasTotais,
-                                estatisticasPorTemporada, // Agora é List
-                                estatisticasPorCompeticao // Agora é List
-                );
+                                estatisticasPorTemporada,
+                                estatisticasPorCompeticao);
         }
-
-        // --- MÉTODOS PÚBLICOS (O CONTRATO - ATUALIZADOS ONDE NECESSÁRIO) ---
 
         @Override
         @Transactional(readOnly = true)
         public List<JogadorResponseDTO> listarJogadores() {
                 return jogadorRepository.findAll().stream()
-                                .map(this::toResponseDTO) // Agora chama o toResponseDTO complexo
+                                .map(this::toResponseDTO)
                                 .collect(Collectors.toList());
         }
 
         @Override
         @Transactional(readOnly = true)
-        public Optional<JogadorResponseDTO> buscarJogadorPorId(Integer id) {
+        public JogadorResponseDTO buscarJogadorPorId(Integer id) {
                 return jogadorRepository.findById(id)
-                                .map(this::toResponseDTO); // Agora chama o toResponseDTO complexo
+                                .map(this::toResponseDTO)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Jogador não encontrado com ID: " + id));
         }
 
         @Override
         @Transactional
         public JogadorResponseDTO criarJogador(JogadorRequestDTO jogadorDTO) {
-                // Usa o toEntity atualizado (que inclui valorDeMercado)
                 Jogador novoJogador = toEntity(jogadorDTO);
                 Jogador jogadorSalvo = jogadorRepository.save(novoJogador);
-                // Chama o toResponseDTO complexo, que (para um novo jogador)
-                // retornará as estatísticas como 0 e listas vazias, o que está correto.
                 return toResponseDTO(jogadorSalvo);
         }
 
         @Override
         @Transactional
-        public Optional<JogadorResponseDTO> atualizarJogador(Integer id, JogadorRequestDTO jogadorDTO) {
-                return jogadorRepository.findById(id)
-                                .map(jogadorExistente -> {
-                                        // Busca e valida o Clube (lógica do toEntity, mas para atualização)
-                                        Clube novoClube = clubeRepository.findById(jogadorDTO.clubeId())
-                                                        .orElseThrow(() -> new EntityNotFoundException("Clube com ID "
-                                                                        + jogadorDTO.clubeId() + " não encontrado."));
+        public JogadorResponseDTO atualizarJogador(Integer id, JogadorRequestDTO jogadorDTO) {
+                Jogador jogadorExistente = jogadorRepository.findById(id)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Jogador não encontrado com ID: " + id));
 
-                                        // Atualiza os campos simples
-                                        jogadorExistente.setNomeCompleto(jogadorDTO.nomeCompleto());
-                                        jogadorExistente.setApelido(jogadorDTO.apelido());
-                                        jogadorExistente.setDataNascimento(jogadorDTO.dataNascimento());
-                                        jogadorExistente.setPosicao(jogadorDTO.posicao());
-                                        jogadorExistente.setValorDeMercado(jogadorDTO.valorDeMercado()); // Adicionado
-                                        jogadorExistente.setClube(novoClube);
+                Clube novoClube = clubeRepository.findById(jogadorDTO.clubeId())
+                                .orElseThrow(() -> new EntityNotFoundException("Clube com ID "
+                                                + jogadorDTO.clubeId() + " não encontrado."));
 
-                                        Jogador jogadorAtualizado = jogadorRepository.save(jogadorExistente);
-                                        // Retorna o DTO complexo com todas as estatísticas calculadas
-                                        return toResponseDTO(jogadorAtualizado);
-                                });
+                jogadorExistente.setNomeCompleto(jogadorDTO.nomeCompleto());
+                jogadorExistente.setApelido(jogadorDTO.apelido());
+                jogadorExistente.setDataNascimento(jogadorDTO.dataNascimento());
+                jogadorExistente.setPosicao(jogadorDTO.posicao());
+                jogadorExistente.setValorDeMercado(jogadorDTO.valorDeMercado());
+                jogadorExistente.setClube(novoClube);
+
+                Jogador jogadorAtualizado = jogadorRepository.save(jogadorExistente);
+                return toResponseDTO(jogadorAtualizado);
         }
 
         @Override
         @Transactional
-        public boolean deletarJogador(Integer id) {
-                // Nenhuma mudança na lógica de deleção.
-                // Graças ao 'cascade = CascadeType.ALL' no Jogador.java,
-                // ao deletar o jogador, o Hibernate automaticamente deletará
-                // todas as suas estatísticas associadas.
-                if (jogadorRepository.existsById(id)) {
-                        jogadorRepository.deleteById(id);
-                        return true;
+        public void deletarJogador(Integer id) {
+                if (!jogadorRepository.existsById(id)) {
+                        throw new EntityNotFoundException("Jogador não encontrado com ID: " + id);
                 }
-                return false;
+                jogadorRepository.deleteById(id);
         }
 }

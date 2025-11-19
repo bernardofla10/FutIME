@@ -3,12 +3,15 @@ package com.futime.labprog.futimeapi.controller;
 import com.futime.labprog.futimeapi.dto.UsuarioResponseDTO;
 import com.futime.labprog.futimeapi.model.Usuario;
 import com.futime.labprog.futimeapi.service.UsuarioService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/usuarios")
+@Tag(name = "Usuários", description = "Gerenciamento de usuários e perfil")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
