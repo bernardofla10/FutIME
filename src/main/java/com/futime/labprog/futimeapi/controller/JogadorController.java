@@ -3,6 +3,7 @@ package com.futime.labprog.futimeapi.controller;
 import com.futime.labprog.futimeapi.dto.JogadorRequestDTO;
 import com.futime.labprog.futimeapi.dto.JogadorResponseDTO;
 import com.futime.labprog.futimeapi.service.JogadorService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class JogadorController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public JogadorResponseDTO criarJogador(@RequestBody JogadorRequestDTO novoJogadorDTO) {
+    public JogadorResponseDTO criarJogador(@RequestBody @Valid JogadorRequestDTO novoJogadorDTO) {
         return jogadorService.criarJogador(novoJogadorDTO);
     }
 
@@ -39,7 +40,8 @@ public class JogadorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<JogadorResponseDTO> atualizarJogador(@PathVariable("id") Integer id, @RequestBody JogadorRequestDTO jogadorDTO) {
+    public ResponseEntity<JogadorResponseDTO> atualizarJogador(@PathVariable("id") Integer id,
+            @RequestBody @Valid JogadorRequestDTO jogadorDTO) {
         return jogadorService.atualizarJogador(id, jogadorDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

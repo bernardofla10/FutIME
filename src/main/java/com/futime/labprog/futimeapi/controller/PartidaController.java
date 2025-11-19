@@ -3,6 +3,7 @@ package com.futime.labprog.futimeapi.controller;
 import com.futime.labprog.futimeapi.dto.PartidaRequestDTO;
 import com.futime.labprog.futimeapi.dto.PartidaResponseDTO;
 import com.futime.labprog.futimeapi.service.PartidaService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class PartidaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PartidaResponseDTO criar(@RequestBody PartidaRequestDTO dto) {
+    public PartidaResponseDTO criar(@RequestBody @Valid PartidaRequestDTO dto) {
         return partidaService.criarPartida(dto);
     }
 
@@ -50,5 +51,3 @@ public class PartidaController {
                 : ResponseEntity.notFound().build();
     }
 }
-
-

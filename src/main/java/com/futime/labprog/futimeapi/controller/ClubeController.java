@@ -3,6 +3,7 @@ package com.futime.labprog.futimeapi.controller;
 import com.futime.labprog.futimeapi.dto.ClubeRequestDTO;
 import com.futime.labprog.futimeapi.dto.ClubeResponseDTO;
 import com.futime.labprog.futimeapi.service.ClubeService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class ClubeController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ClubeResponseDTO criarClube(@RequestBody ClubeRequestDTO novoClubeDTO) {
+    public ClubeResponseDTO criarClube(@RequestBody @Valid ClubeRequestDTO novoClubeDTO) {
         return clubeService.criarClube(novoClubeDTO);
     }
 
@@ -39,7 +40,8 @@ public class ClubeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClubeResponseDTO> atualizarClube(@PathVariable("id") Integer id, @RequestBody ClubeRequestDTO clubeDTO) {
+    public ResponseEntity<ClubeResponseDTO> atualizarClube(@PathVariable("id") Integer id,
+            @RequestBody @Valid ClubeRequestDTO clubeDTO) {
         return clubeService.atualizarClube(id, clubeDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

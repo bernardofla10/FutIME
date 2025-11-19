@@ -3,6 +3,7 @@ package com.futime.labprog.futimeapi.controller;
 import com.futime.labprog.futimeapi.dto.CompeticaoRequestDTO;
 import com.futime.labprog.futimeapi.dto.CompeticaoResponseDTO;
 import com.futime.labprog.futimeapi.service.CompeticaoService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class CompeticaoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CompeticaoResponseDTO criarCompeticao(@RequestBody CompeticaoRequestDTO novaCompeticaoDTO) {
+    public CompeticaoResponseDTO criarCompeticao(@RequestBody @Valid CompeticaoRequestDTO novaCompeticaoDTO) {
         return competicaoService.criarCompeticao(novaCompeticaoDTO);
     }
 
@@ -39,7 +40,8 @@ public class CompeticaoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CompeticaoResponseDTO> atualizarCompeticao(@PathVariable("id") Integer id, @RequestBody CompeticaoRequestDTO competicaoDTO) {
+    public ResponseEntity<CompeticaoResponseDTO> atualizarCompeticao(@PathVariable("id") Integer id,
+            @RequestBody CompeticaoRequestDTO competicaoDTO) {
         return competicaoService.atualizarCompeticao(id, competicaoDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

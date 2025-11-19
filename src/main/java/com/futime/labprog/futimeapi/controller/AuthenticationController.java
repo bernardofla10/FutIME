@@ -3,6 +3,7 @@ package com.futime.labprog.futimeapi.controller;
 import com.futime.labprog.futimeapi.dto.RegisterDTO;
 import com.futime.labprog.futimeapi.dto.UsuarioResponseDTO;
 import com.futime.labprog.futimeapi.service.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +22,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UsuarioResponseDTO> register(@RequestBody RegisterDTO registerDTO) {
+    public ResponseEntity<UsuarioResponseDTO> register(@RequestBody @Valid RegisterDTO registerDTO) {
         UsuarioResponseDTO novoUsuario = usuarioService.registerUser(registerDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
     }
