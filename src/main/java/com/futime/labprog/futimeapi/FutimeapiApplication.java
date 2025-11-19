@@ -10,4 +10,4 @@ public class FutimeapiApplication {
 		SpringApplication.run(FutimeapiApplication.class, args);
 	}
 
-}  
+}

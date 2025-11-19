@@ -8,8 +8,15 @@ import java.util.Optional;
 
 public interface JogadorService {
     List<JogadorResponseDTO> listarJogadores();
+
     Optional<JogadorResponseDTO> buscarJogadorPorId(Integer id);
+
     JogadorResponseDTO criarJogador(JogadorRequestDTO jogadorDTO);
+
     Optional<JogadorResponseDTO> atualizarJogador(Integer id, JogadorRequestDTO jogadorDTO);
+
     boolean deletarJogador(Integer id);
+
+    // Helper exposto para outros serviços (como UsuarioService)
+    JogadorResponseDTO toResponseDTO(com.futime.labprog.futimeapi.model.Jogador jogador);
 }
