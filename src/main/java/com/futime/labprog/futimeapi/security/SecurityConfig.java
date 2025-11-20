@@ -17,6 +17,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(withDefaults()) // Habilita CORS no Spring Security
                 .csrf(csrf -> csrf.disable()) // Desabilita CSRF pois é uma API REST
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/register", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
