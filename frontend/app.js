@@ -6,8 +6,8 @@ const API_BASE = 'http://localhost:8081';
 // =======================
 // ESTADO DA APLICAÇÃO
 // =======================
-let selectedCompetitionName = null; // Nome da competição selecionada (ex: "Brasileirão")
-let selectedCompetition = null;     // ID da competição específica (Nome + Temporada)
+let selectedCompetitionName = null;
+let selectedCompetition = null;
 let selectedSeason = null;
 let selectedCategory = null;
 
@@ -15,12 +15,23 @@ let allCompetitions = [];
 let allClubes = [];
 let allJogadores = [];
 let allEstadios = [];
+let allPartidas = [];
 
+// =======================
+// ELEMENTOS DOM
+// =======================
 const resultsTitleEl = document.getElementById('resultsTitle');
 const resultsSubtitleEl = document.getElementById('resultsSubtitle');
 const cardsContainerEl = document.getElementById('cardsContainer');
-const detailsPanelEl = document.getElementById('detailsPanel');
 const selectionHintEl = document.getElementById('selectionHint');
+
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const detailView = document.getElementById('detailView');
+const detailContent = document.getElementById('detailContent');
+const homeView = document.getElementById('homeView');
+const btnBack = document.getElementById('btnBack');
+const btnHome = document.getElementById('btnHome');
 
 // =======================
 // UTILITÁRIOS
@@ -59,15 +70,17 @@ async function loadCompeticoes() {
 
 async function loadAllData() {
     try {
-        const [clubes, jogadores, estadios] = await Promise.all([
+        const [clubes, jogadores, estadios, partidas] = await Promise.all([
             fetchData('/clubes'),
             fetchData('/jogadores'),
-            fetchData('/estadios')
+            fetchData('/estadios'),
+            fetchData('/partidas')
         ]);
 
         allClubes = clubes;
         allJogadores = jogadores;
         allEstadios = estadios;
+        allPartidas = partidas;
     } catch (error) {
         console.error('Erro ao carregar dados gerais:', error);
         throw error;
@@ -75,7 +88,285 @@ async function loadAllData() {
 }
 
 // =======================
-// RENDERIZAÇÃO
+// ROTEAMENTO E NAVEGAÇÃO
+// =======================
+
+function showHome() {
+    detailView.classList.add('hidden');
+    homeView.classList.remove('hidden');
+    searchResults.classList.add('hidden');
+    searchInput.value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showDetailView() {
+    homeView.classList.add('hidden');
+    detailView.classList.remove('hidden');
+    searchResults.classList.add('hidden');
+    searchInput.value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function navigateTo(type, id) {
+    showDetailView();
+    switch (type) {
+        case 'clube':
+            const clube = allClubes.find(c => c.id === id);
+            if (clube) renderTeamDetails(clube);
+            break;
+        case 'jogador':
+            const jogador = allJogadores.find(j => j.id === id);
+            if (jogador) renderPlayerDetails(jogador);
+            break;
+        case 'estadio':
+            const estadio = allEstadios.find(e => e.id === id);
+            if (estadio) renderStadiumDetails(estadio);
+            break;
+        case 'competicao':
+            const competicao = allCompetitions.find(c => c.id === id);
+            if (competicao) renderCompetitionDetails(competicao);
+            break;
+    }
+}
+
+// =======================
+// BUSCA
+// =======================
+
+searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
+
+function handleSearch(query) {
+    if (!query || query.length < 2) {
+        searchResults.classList.add('hidden');
+        return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    const results = [];
+
+    // Buscar Clubes
+    allClubes.forEach(c => {
+        if (c.nome.toLowerCase().includes(lowerQuery)) {
+            results.push({ type: 'clube', name: c.nome, id: c.id, label: 'Time' });
+        }
+    });
+
+    // Buscar Jogadores
+    allJogadores.forEach(j => {
+        if ((j.nomeCompleto && j.nomeCompleto.toLowerCase().includes(lowerQuery)) ||
+            (j.apelido && j.apelido.toLowerCase().includes(lowerQuery))) {
+            results.push({ type: 'jogador', name: j.apelido || j.nomeCompleto, id: j.id, label: 'Jogador' });
+        }
+    });
+
+    // Buscar Estádios
+    allEstadios.forEach(e => {
+        if (e.nome.toLowerCase().includes(lowerQuery)) {
+            results.push({ type: 'estadio', name: e.nome, id: e.id, label: 'Estádio' });
+        }
+    });
+
+    // Buscar Competições
+    allCompetitions.forEach(c => {
+        if (c.nome.toLowerCase().includes(lowerQuery)) {
+            results.push({ type: 'competicao', name: `${c.nome} ${c.temporada}`, id: c.id, label: 'Competição' });
+        }
+    });
+
+    renderSearchResults(results);
+}
+
+function renderSearchResults(results) {
+    searchResults.innerHTML = '';
+    if (results.length === 0) {
+        searchResults.classList.add('hidden');
+        return;
+    }
+
+    results.slice(0, 10).forEach(res => {
+        const div = document.createElement('div');
+        div.className = 'search-item';
+        div.innerHTML = `
+            <span class="search-item-name">${res.name}</span>
+            <span class="search-item-type">${res.label}</span>
+        `;
+        div.addEventListener('click', () => {
+            navigateTo(res.type, res.id);
+        });
+        searchResults.appendChild(div);
+    });
+
+    searchResults.classList.remove('hidden');
+}
+
+// =======================
+// RENDERIZAÇÃO DETALHADA
+// =======================
+
+function renderTeamDetails(clube) {
+    // Jogadores do time
+    const jogadores = allJogadores.filter(j => j.clube && j.clube.id === clube.id);
+
+    // Partidas do time
+    const partidas = allPartidas.filter(p =>
+        (p.mandante && p.mandante.id === clube.id) ||
+        (p.visitante && p.visitante.id === clube.id)
+    );
+
+    // Competições que o time disputa (baseado nas partidas ou na associação da competição)
+    // Vamos usar allCompetitions e ver onde o clube está
+    const competicoes = allCompetitions.filter(c => c.clubes && c.clubes.some(cl => cl.id === clube.id));
+
+    let partidasHtml = '';
+    if (partidas.length > 0) {
+        partidasHtml = partidas.map(p => {
+            const isMandante = p.mandante.id === clube.id;
+            const adversario = isMandante ? p.visitante : p.mandante;
+            const golsPro = isMandante ? p.golsMandante : p.golsVisitante;
+            const golsContra = isMandante ? p.golsVisitante : p.golsMandante;
+
+            let statusClass = 'draw';
+            if (golsPro > golsContra) statusClass = 'win';
+            else if (golsPro < golsContra) statusClass = 'loss';
+
+            return `
+                <div class="match-card ${statusClass}">
+                    <div class="match-info">
+                        <span class="match-date">${formatDate(p.dataHora)}</span>
+                        <span class="match-opponent">vs ${adversario.nome}</span>
+                    </div>
+                    <div class="match-score">${golsPro} - ${golsContra}</div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        partidasHtml = '<p>Nenhuma partida registrada.</p>';
+    }
+
+    let jogadoresHtml = jogadores.map(j => `
+        <li class="clickable" onclick="navigateTo('jogador', ${j.id})">
+            ${j.apelido || j.nomeCompleto} ${j.posicao ? `<small>(${j.posicao})</small>` : ''}
+        </li>
+    `).join('');
+
+    let competicoesHtml = competicoes.map(c => `
+        <li class="clickable" onclick="navigateTo('competicao', ${c.id})">
+            ${c.nome} ${c.temporada}
+        </li>
+    `).join('');
+
+    detailContent.innerHTML = `
+        <h2>${clube.nome}</h2>
+        <p class="details-meta">
+            ${clube.cidade ? `Cidade: ${clube.cidade} &bull;` : ''}
+            Estádio: <span class="clickable" onclick="navigateTo('estadio', ${clube.estadio?.id})">${clube.estadio?.nome || '—'}</span>
+        </p>
+
+        <div class="details-grid">
+            <div class="details-block">
+                <h4>Últimas Partidas</h4>
+                ${partidasHtml}
+            </div>
+            <div class="details-block">
+                <h4>Elenco</h4>
+                <ul>${jogadoresHtml || '<li>Sem jogadores cadastrados</li>'}</ul>
+            </div>
+            <div class="details-block">
+                <h4>Competições</h4>
+                <ul>${competicoesHtml || '<li>Não disputa competições registradas</li>'}</ul>
+            </div>
+        </div>
+    `;
+}
+
+function renderPlayerDetails(jogador) {
+    const estatisticas = jogador.estatisticasPorCompeticao || [];
+
+    let estatHtml = estatisticas.map(e => `
+        <li>
+            <strong>${e.nomeCompeticao}</strong>: 
+            ${e.gols} gols, ${e.assistencias} assistências
+        </li>
+    `).join('');
+
+    detailContent.innerHTML = `
+        <h2>${jogador.nomeCompleto}</h2>
+        <p class="details-meta">
+            Apelido: <strong>${jogador.apelido || '—'}</strong> &bull;
+            Posição: <strong>${jogador.posicao || '—'}</strong> &bull;
+            Time: <span class="clickable" onclick="navigateTo('clube', ${jogador.clube?.id})"><strong>${jogador.clube?.nome || '—'}</strong></span>
+        </p>
+
+        <div class="details-grid">
+            <div class="details-block">
+                <h4>Estatísticas Totais</h4>
+                <ul>
+                    <li>Gols: ${jogador.golsTotais ?? 0}</li>
+                    <li>Assistências: ${jogador.assistenciasTotais ?? 0}</li>
+                    <li>Valor de Mercado: ${formatCurrency(jogador.valorDeMercado)}</li>
+                </ul>
+            </div>
+            <div class="details-block">
+                <h4>Por Competição</h4>
+                <ul>${estatHtml || '<li>Sem estatísticas registradas</li>'}</ul>
+            </div>
+        </div>
+    `;
+}
+
+function renderStadiumDetails(estadio) {
+    // Encontrar dono do estádio (clube que tem este estádio)
+    const dono = allClubes.find(c => c.estadio && c.estadio.id === estadio.id);
+
+    detailContent.innerHTML = `
+        <h2>${estadio.nome}</h2>
+        <p class="details-meta">
+            Cidade: <strong>${estadio.cidade}</strong> &bull;
+            País: <strong>${estadio.pais}</strong>
+        </p>
+
+        <div class="details-grid">
+            <div class="details-block">
+                <h4>Time Mandante</h4>
+                ${dono ? `
+                    <p class="clickable" onclick="navigateTo('clube', ${dono.id})">
+                        <strong>${dono.nome}</strong>
+                    </p>
+                ` : '<p>Nenhum time vinculado como mandante.</p>'}
+            </div>
+        </div>
+    `;
+}
+
+function renderCompetitionDetails(competicao) {
+    // Times da competição
+    const times = competicao.clubes || [];
+
+    // Partidas da competição
+    // Assumindo que podemos filtrar partidas por competição se tivermos essa info no DTO de partida
+    // Se não tiver, teremos que confiar que allPartidas tem tudo e tentar cruzar dados
+    // Por enquanto, vamos listar os times
+
+    let timesHtml = times.map(t => `
+        <li class="clickable" onclick="navigateTo('clube', ${t.id})">
+            ${t.nome}
+        </li>
+    `).join('');
+
+    detailContent.innerHTML = `
+        <h2>${competicao.nome} (${competicao.temporada})</h2>
+        
+        <div class="details-grid">
+            <div class="details-block">
+                <h4>Times Participantes</h4>
+                <ul>${timesHtml || '<li>Sem times registrados</li>'}</ul>
+            </div>
+        </div>
+    `;
+}
+
+// =======================
+// RENDERIZAÇÃO HOME (Mantida e adaptada)
 // =======================
 
 function renderCompetitionButtons() {
@@ -87,21 +378,15 @@ function renderCompetitionButtons() {
         return;
     }
 
-    // Agrupar competições por nome para não repetir botões
     const uniqueNames = [...new Set(allCompetitions.map(c => c.nome))];
 
     uniqueNames.forEach(name => {
         const btn = document.createElement('button');
         btn.className = 'pill';
         btn.dataset.competitionName = name;
-
-        // Ícone baseado no nome da competição
         let icon = '🏆';
-        if (name.toLowerCase().includes('brasileirão')) {
-            icon = '🇧🇷';
-        } else if (name.toLowerCase().includes('libertadores')) {
-            icon = '🌎';
-        }
+        if (name.toLowerCase().includes('brasileirão')) icon = '🇧🇷';
+        else if (name.toLowerCase().includes('libertadores')) icon = '🌎';
 
         btn.textContent = `${icon} ${name}`;
         btn.addEventListener('click', () => selectCompetitionByName(name));
@@ -111,21 +396,14 @@ function renderCompetitionButtons() {
 
 function selectCompetitionByName(name) {
     selectedCompetitionName = name;
-
-    // Atualiza UI da competição
     document.querySelectorAll('#competitionRow .pill').forEach(b => b.classList.remove('active'));
     const activeBtn = document.querySelector(`[data-competition-name="${name}"]`);
     if (activeBtn) activeBtn.classList.add('active');
 
-    // Encontrar temporadas disponíveis para este nome
     const variations = allCompetitions.filter(c => c.nome === name);
-
-    // Renderizar botões de temporada dinamicamente
     renderSeasonButtons(variations);
 
-    // Auto-selecionar a temporada mais recente
     if (variations.length > 0) {
-        // Ordena decrescente (2025, 2024...)
         variations.sort((a, b) => b.temporada.localeCompare(a.temporada));
         selectSeason(variations[0].temporada);
     }
@@ -134,8 +412,6 @@ function selectCompetitionByName(name) {
 function renderSeasonButtons(variations) {
     const container = document.getElementById('seasonRow');
     container.innerHTML = '';
-
-    // Extrair e ordenar temporadas
     const seasons = variations.map(v => v.temporada).sort();
 
     seasons.forEach(season => {
@@ -150,40 +426,27 @@ function renderSeasonButtons(variations) {
 
 function selectSeason(season) {
     selectedSeason = season;
-
-    // Atualiza UI da temporada
     document.querySelectorAll('#seasonRow .pill').forEach(b => b.classList.remove('active'));
     const activeBtn = document.querySelector(`[data-season="${season}"]`);
     if (activeBtn) activeBtn.classList.add('active');
 
-    // Resolve o ID específico da competição (Nome + Temporada)
     if (selectedCompetitionName) {
         const targetComp = allCompetitions.find(c => c.nome === selectedCompetitionName && c.temporada === season);
-        if (targetComp) {
-            selectedCompetition = targetComp.id;
-        }
+        if (targetComp) selectedCompetition = targetComp.id;
     }
-
     updateHint();
     render();
 }
 
 function updateHint() {
-    if (!selectedCompetitionName) {
-        selectionHintEl.textContent = 'Selecione a competição para começar.';
-    } else if (!selectedSeason) {
-        selectionHintEl.textContent = 'Agora escolha a temporada.';
-    } else if (!selectedCategory) {
-        selectionHintEl.textContent = 'Perfeito! Agora escolha se quer ver times, jogadores ou estádios.';
-    } else {
-        selectionHintEl.textContent = `Explorando ${selectedCompetitionName} ${selectedSeason} — categoria: ${selectedCategory}.`;
-    }
+    if (!selectedCompetitionName) selectionHintEl.textContent = 'Selecione a competição para começar.';
+    else if (!selectedSeason) selectionHintEl.textContent = 'Agora escolha a temporada.';
+    else if (!selectedCategory) selectionHintEl.textContent = 'Perfeito! Agora escolha se quer ver times, jogadores ou estádios.';
+    else selectionHintEl.textContent = `Explorando ${selectedCompetitionName} ${selectedSeason} — categoria: ${selectedCategory}.`;
 }
 
 function clearResults() {
     cardsContainerEl.innerHTML = '';
-    detailsPanelEl.classList.add('hidden');
-    detailsPanelEl.innerHTML = '';
 }
 
 function showLoading() {
@@ -196,7 +459,6 @@ function showError(message) {
 
 function render() {
     clearResults();
-
     if (!selectedCompetition || !selectedSeason || !selectedCategory) {
         resultsTitleEl.textContent = 'Selecione competição, temporada e categoria.';
         resultsSubtitleEl.textContent = 'Use as opções acima para filtrar o que você quer ver.';
@@ -204,11 +466,7 @@ function render() {
     }
 
     const comp = allCompetitions.find(c => c.id === selectedCompetition);
-    if (!comp) {
-        resultsTitleEl.textContent = 'Competição não encontrada';
-        resultsSubtitleEl.textContent = '';
-        return;
-    }
+    if (!comp) return;
 
     const catLabel = {
         clubes: 'Times participantes',
@@ -220,29 +478,21 @@ function render() {
     resultsSubtitleEl.textContent = catLabel;
 
     switch (selectedCategory) {
-        case 'clubes':
-            renderClubes(comp);
-            break;
-        case 'jogadores':
-            renderJogadores(comp);
-            break;
-        case 'estadios':
-            renderEstadios();
-            break;
+        case 'clubes': renderClubes(comp); break;
+        case 'jogadores': renderJogadores(comp); break;
+        case 'estadios': renderEstadios(); break;
     }
 }
 
 function renderClubes(comp) {
-    // O DTO de competição já traz a lista de clubes, mas vamos garantir
     const clubesFiltered = comp.clubes || [];
-
     if (!clubesFiltered.length) {
-        cardsContainerEl.innerHTML = '<p>Não há times cadastrados para essa temporada nesta competição.</p>';
+        cardsContainerEl.innerHTML = '<p>Não há times cadastrados.</p>';
         return;
     }
 
     const html = clubesFiltered.map(clube => `
-        <article class="card clickable" data-clube-id="${clube.id}">
+        <article class="card clickable" onclick="navigateTo('clube', ${clube.id})">
             <div class="card-header">
                 <div>
                     <div class="card-title">${clube.nome}</div>
@@ -255,61 +505,20 @@ function renderClubes(comp) {
             </div>
         </article>
     `).join('');
-
     cardsContainerEl.innerHTML = html;
-
-    document.querySelectorAll('[data-clube-id]').forEach(el => {
-        el.addEventListener('click', () => {
-            const id = parseInt(el.getAttribute('data-clube-id'));
-            // Busca nos dados completos para ter certeza que temos tudo
-            const clube = allClubes.find(c => c.id === id) || clubesFiltered.find(c => c.id === id);
-            if (clube) renderClubeDetails(clube);
-        });
-    });
-}
-
-function renderClubeDetails(clube) {
-    detailsPanelEl.classList.remove('hidden');
-    detailsPanelEl.innerHTML = `
-        <h3>${clube.nome}</h3>
-        <p class="details-meta">
-            País: <strong>${clube.pais}</strong> &bull;
-            Cidade: <strong>${clube.estadio?.cidade || '—'}</strong> &bull;
-            Estádio: <strong>${clube.estadio?.nome || '—'}</strong>
-        </p>
-        <div class="details-grid">
-            <div class="details-block">
-                <h4>Informações do Estádio</h4>
-                <ul>
-                    ${clube.estadio ? `
-                        <li>Nome: ${clube.estadio.nome}</li>
-                        <li>Cidade: ${clube.estadio.cidade}</li>
-                        <li>País: ${clube.estadio.pais}</li>
-                    ` : '<li>Sem informações de estádio</li>'}
-                </ul>
-            </div>
-        </div>
-    `;
-
-    detailsPanelEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderJogadores(comp) {
-    // Filtrar jogadores que pertencem aos clubes desta competição
-    // O DTO de Jogador tem o objeto 'clube' completo
     const clubeIds = (comp.clubes || []).map(c => c.id);
-
-    const jogadoresFiltered = allJogadores.filter(j =>
-        j.clube && clubeIds.includes(j.clube.id)
-    );
+    const jogadoresFiltered = allJogadores.filter(j => j.clube && clubeIds.includes(j.clube.id));
 
     if (!jogadoresFiltered.length) {
-        cardsContainerEl.innerHTML = '<p>Não há jogadores cadastrados para essa temporada.</p>';
+        cardsContainerEl.innerHTML = '<p>Não há jogadores cadastrados.</p>';
         return;
     }
 
     const html = jogadoresFiltered.map(jogador => `
-        <article class="card clickable" data-jogador-id="${jogador.id}">
+        <article class="card clickable" onclick="navigateTo('jogador', ${jogador.id})">
             <div class="card-header">
                 <div class="card-title">${jogador.apelido || jogador.nomeCompleto}</div>
                 <span class="badge">${jogador.posicao || '—'}</span>
@@ -321,55 +530,7 @@ function renderJogadores(comp) {
             </div>
         </article>
     `).join('');
-
     cardsContainerEl.innerHTML = html;
-
-    document.querySelectorAll('[data-jogador-id]').forEach(el => {
-        el.addEventListener('click', () => {
-            const id = parseInt(el.getAttribute('data-jogador-id'));
-            const jogador = jogadoresFiltered.find(j => j.id === id);
-            if (jogador) renderJogadorDetails(jogador);
-        });
-    });
-}
-
-function renderJogadorDetails(jogador) {
-    detailsPanelEl.classList.remove('hidden');
-
-    const estatisticasPorCompeticao = jogador.estatisticasPorCompeticao || [];
-    const estatHtml = estatisticasPorCompeticao.length > 0
-        ? estatisticasPorCompeticao.map(e => `
-            <li>${e.nomeCompeticao || 'Competição'}: <strong>${e.gols || 0}</strong> gols, <strong>${e.assistencias || 0}</strong> assistências</li>
-        `).join('')
-        : '<li>Sem estatísticas por competição</li>';
-
-    detailsPanelEl.innerHTML = `
-        <h3>${jogador.nomeCompleto}</h3>
-        <p class="details-meta">
-            Apelido: <strong>${jogador.apelido || '—'}</strong> &bull;
-            Posição: <strong>${jogador.posicao || '—'}</strong> &bull;
-            Time: <strong>${jogador.clube?.nome || '—'}</strong> &bull;
-            Nascimento: <strong>${formatDate(jogador.dataNascimento)}</strong>
-        </p>
-        <div class="details-grid">
-            <div class="details-block">
-                <h4>Estatísticas Totais</h4>
-                <ul>
-                    <li>Gols: ${jogador.golsTotais ?? 0}</li>
-                    <li>Assistências: ${jogador.assistenciasTotais ?? 0}</li>
-                    <li>Valor de Mercado: ${formatCurrency(jogador.valorDeMercado)}</li>
-                </ul>
-            </div>
-            <div class="details-block">
-                <h4>Estatísticas por Competição</h4>
-                <ul>
-                    ${estatHtml}
-                </ul>
-            </div>
-        </div>
-    `;
-
-    detailsPanelEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderEstadios() {
@@ -379,7 +540,7 @@ function renderEstadios() {
     }
 
     const html = allEstadios.map(estadio => `
-        <article class="card">
+        <article class="card clickable" onclick="navigateTo('estadio', ${estadio.id})">
             <div class="card-header">
                 <div class="card-title">${estadio.nome}</div>
                 <span class="badge">🏟️ Estádio</span>
@@ -390,17 +551,19 @@ function renderEstadios() {
             </div>
         </article>
     `).join('');
-
     cardsContainerEl.innerHTML = html;
 }
 
 // =======================
-// LISTENERS DE INTERFACE
+// LISTENERS GERAIS
 // =======================
 
-// Temporada: Listeners são adicionados dinamicamente em renderSeasonButtons
+btnBack.addEventListener('click', showHome);
+btnHome.addEventListener('click', (e) => {
+    e.preventDefault();
+    showHome();
+});
 
-// Categoria
 document.querySelectorAll('#categoryRow .pill').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('#categoryRow .pill').forEach(b => b.classList.remove('active'));
@@ -429,5 +592,4 @@ async function init() {
     }
 }
 
-// Iniciar quando a página carregar
 window.addEventListener('DOMContentLoaded', init);
