@@ -21,7 +21,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Desabilita CSRF pois é uma API REST
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/register", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
-                        .permitAll() // Endpoints públicos
+                        .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/competicoes/**", "/clubes/**",
+                                "/jogadores/**", "/estadios/**")
+                        .permitAll()
                         .anyRequest().authenticated() // Todo o resto exige autenticação
                 )
                 .httpBasic(withDefaults()); // Habilita autenticação Basic (usuário/senha)
