@@ -23,7 +23,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/register", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                         .permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/competicoes/**", "/clubes/**",
-                                "/jogadores/**", "/estadios/**")
+                                "/jogadores/**", "/estadios/**", "/partidas/**")
                         .permitAll()
                         .anyRequest().authenticated() // Todo o resto exige autenticação
                 )

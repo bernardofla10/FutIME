@@ -14,8 +14,15 @@
             <div class="logo">
                 🏆 FUTIME
             </div>
+
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Pesquisar times, jogadores, estádios..."
+                    autocomplete="off">
+                <div id="searchResults" class="search-results hidden"></div>
+            </div>
+
             <ul class="nav-links">
-                <li><a href="#topo" class="active">Início</a></li>
+                <li><a href="#" id="btnHome" class="active">Início</a></li>
                 <li><a href="#explorar">Explorar</a></li>
                 <li><a href="#sobre">Sobre</a></li>
             </ul>
@@ -23,74 +30,84 @@
     </header>
 
     <main id="topo">
-        <section class="hero">
-            <div class="hero-content">
-                <h1>FUTIME</h1>
-                <h2>Portal de Estatísticas do Futebol Brasileiro</h2>
-                <p>Acompanhe dados completos de Brasileirão e Libertadores.
-                    Cada número conta uma história — de clubes, jogadores e estádios que marcam época.</p>
-            </div>
+        <!-- Container Genérico para Detalhes (Time, Jogador, Estádio, Competição) -->
+        <section id="detailView" class="detail-view hidden">
+            <button id="btnBack" class="btn-back">← Voltar</button>
+            <div id="detailContent"></div>
         </section>
 
-        <section class="explorer" id="explorar">
-            <h2>Explore as competições</h2>
-            <div class="explorer-grid">
-                <div class="explorer-box">
-                    <h3>Competição</h3>
-                    <div class="pill-row" id="competitionRow">
-                        <!-- Competições serão carregadas dinamicamente -->
+        <!-- Visão Principal (Home) -->
+        <div id="homeView">
+            <section class="hero">
+                <div class="hero-content">
+                    <h1>FUTIME</h1>
+                    <h2>Portal de Estatísticas do Futebol Brasileiro</h2>
+                    <p>Acompanhe dados completos de Brasileirão e Libertadores.
+                        Cada número conta uma história — de clubes, jogadores e estádios que marcam época.</p>
+                </div>
+            </section>
+
+            <section class="explorer" id="explorar">
+                <h2>Explore as competições</h2>
+                <div class="explorer-grid">
+                    <div class="explorer-box">
+                        <h3>Competição</h3>
+                        <div class="pill-row" id="competitionRow">
+                            <!-- Competições serão carregadas dinamicamente -->
+                        </div>
+                    </div>
+
+                    <div class="explorer-box">
+                        <h3>Temporada</h3>
+                        <div class="pill-row" id="seasonRow">
+                            <!-- Temporadas serão carregadas dinamicamente -->
+                        </div>
+                    </div>
+
+                    <div class="explorer-box">
+                        <h3>O que você quer ver?</h3>
+                        <div class="pill-row" id="categoryRow">
+                            <button class="pill" data-category="clubes">Times</button>
+                            <button class="pill" data-category="jogadores">Jogadores</button>
+                            <button class="pill" data-category="estadios">Estádios</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="explorer-box">
-                    <h3>Temporada</h3>
-                    <div class="pill-row" id="seasonRow">
-                        <!-- Temporadas serão carregadas dinamicamente -->
-                    </div>
-                </div>
-
-                <div class="explorer-box">
-                    <h3>O que você quer ver?</h3>
-                    <div class="pill-row" id="categoryRow">
-                        <button class="pill" data-category="clubes">Times</button>
-                        <button class="pill" data-category="jogadores">Jogadores</button>
-                        <button class="pill" data-category="estadios">Estádios</button>
-                    </div>
-                </div>
-            </div>
-
-            <p class="explorer-hint" id="selectionHint">
-                Selecione a competição e a temporada para começar. Depois, escolha uma categoria para explorar.
-            </p>
-        </section>
-
-        <section class="results" id="resultsSection">
-            <div class="results-header">
-                <h3 class="results-title" id="resultsTitle">Nenhum filtro selecionado ainda</h3>
-                <p class="results-subtitle" id="resultsSubtitle">
-                    Assim que você escolher competição, temporada e categoria, os dados aparecem aqui.
+                <p class="explorer-hint" id="selectionHint">
+                    Selecione a competição e a temporada para começar. Depois, escolha uma categoria para explorar.
                 </p>
-            </div>
+            </section>
 
-            <div id="cardsContainer" class="cards-grid"></div>
+            <section class="results" id="resultsSection">
+                <div class="results-header">
+                    <h3 class="results-title" id="resultsTitle">Nenhum filtro selecionado ainda</h3>
+                    <p class="results-subtitle" id="resultsSubtitle">
+                        Assim que você escolher competição, temporada e categoria, os dados aparecem aqui.
+                    </p>
+                </div>
 
-            <div id="detailsPanel" class="details-panel hidden"></div>
-        </section>
+                <div id="cardsContainer" class="cards-grid"></div>
 
-        <section class="about-section" id="sobre">
-            <h2>Sobre o FUTIME</h2>
-            <p>
-                O FUTIME é uma iniciativa independente criada para transformar estatísticas em narrativa.
-                A ideia é ir além da tabela tradicional: aproximar torcedores, estudantes e profissionais de dados
-                do universo do futebol brasileiro por meio de visualizações claras, comparações e recortes
-                temáticos. Aqui você consegue navegar por temporadas, competições, clubes, jogadores e estádios,
-                visualizando quem decidiu campeonatos, quem mais deu assistências e quais arenas foram palco dos
-                grandes momentos. <br><br>
-                Este projeto nasceu como um laboratório de aprendizagem em desenvolvimento web e análise de dados
-                esportivos, e está em constante evolução. Novas métricas, visualizações e competições podem ser
-                adicionadas a qualquer momento — sempre com o mesmo propósito: transformar dados em paixão pelo futebol.
-            </p>
-        </section>
+                <div id="detailsPanel" class="details-panel hidden"></div>
+            </section>
+
+            <section class="about-section" id="sobre">
+                <h2>Sobre o FUTIME</h2>
+                <p>
+                    O FUTIME é uma iniciativa independente criada para transformar estatísticas em narrativa.
+                    A ideia é ir além da tabela tradicional: aproximar torcedores, estudantes e profissionais de dados
+                    do universo do futebol brasileiro por meio de visualizações claras, comparações e recortes
+                    temáticos. Aqui você consegue navegar por temporadas, competições, clubes, jogadores e estádios,
+                    visualizando quem decidiu campeonatos, quem mais deu assistências e quais arenas foram palco dos
+                    grandes momentos. <br><br>
+                    Este projeto nasceu como um laboratório de aprendizagem em desenvolvimento web e análise de dados
+                    esportivos, e está em constante evolução. Novas métricas, visualizações e competições podem ser
+                    adicionadas a qualquer momento — sempre com o mesmo propósito: transformar dados em paixão pelo
+                    futebol.
+                </p>
+            </section>
+        </div>
     </main>
 
     <footer>
