@@ -48,4 +48,11 @@ public class UsuarioController {
         UsuarioResponseDTO atualizado = usuarioService.adicionarJogadorObservado(usuario.getId(), jogadorId);
         return ResponseEntity.ok(atualizado);
     }
+
+    @DeleteMapping("/olheiro/{jogadorId}")
+    public ResponseEntity<UsuarioResponseDTO> removerJogadorObservado(@PathVariable Integer jogadorId) {
+        Usuario usuario = getUsuarioLogado();
+        UsuarioResponseDTO atualizado = usuarioService.removerJogadorObservado(usuario.getId(), jogadorId);
+        return ResponseEntity.ok(atualizado);
+    }
 }

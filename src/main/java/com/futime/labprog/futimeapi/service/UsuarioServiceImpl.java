@@ -84,6 +84,22 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    @Transactional
+    public UsuarioResponseDTO removerJogadorObservado(Integer usuarioId, Integer jogadorId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + usuarioId));
+        Jogador jogador = jogadorRepository.findById(jogadorId)
+                .orElseThrow(() -> new EntityNotFoundException("Jogador não encontrado com ID: " + jogadorId));
+
+        if (usuario.getJogadoresObservados() != null) {
+            usuario.getJogadoresObservados().remove(jogador);
+        }
+
+        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+        return toResponseDTO(usuarioSalvo);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public UsuarioResponseDTO buscarPerfil(Integer usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)

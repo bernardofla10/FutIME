@@ -11,4 +11,6 @@ public interface UsuarioService {
     UsuarioResponseDTO adicionarJogadorObservado(Integer usuarioId, Integer jogadorId);
 
     UsuarioResponseDTO buscarPerfil(Integer usuarioId);
+
+    UsuarioResponseDTO removerJogadorObservado(Integer usuarioId, Integer jogadorId);
 }
