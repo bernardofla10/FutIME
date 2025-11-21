@@ -25,6 +25,13 @@
                 <li><a href="#" id="btnHome" class="active">Início</a></li>
                 <li><a href="#explorar">Explorar</a></li>
                 <li><a href="#sobre">Sobre</a></li>
+                <li id="userSection">
+                    <button id="btnLogin" class="btn-login">Entrar</button>
+                    <div id="userProfile" class="user-profile hidden">
+                        <span id="userName"></span>
+                        <button id="btnLogout" class="btn-logout">Sair</button>
+                    </div>
+                </li>
             </ul>
         </nav>
     </header>
@@ -107,6 +114,70 @@
                     futebol.
                 </p>
             </section>
+
+            <!-- Seção de Favoritos do Usuário -->
+            <section class="user-favorites hidden" id="userFavorites">
+                <h2>Meus Favoritos</h2>
+                <div class="favorites-grid">
+                    <div class="favorite-team" id="favoriteTeamSection">
+                        <h3>Time do Coração ❤️</h3>
+                        <div id="favoriteTeamContent">
+                            <p class="no-favorite">Você ainda não selecionou seu time do coração.</p>
+                        </div>
+                    </div>
+                    <div class="favorite-players" id="favoritePlayersSection">
+                        <h3>Jogadores Favoritos ⭐</h3>
+                        <div id="favoritePlayersContent">
+                            <p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Modal de Login/Registro -->
+        <div id="authModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Entrar</button>
+                    <button class="auth-tab" data-tab="register">Registrar</button>
+                </div>
+
+                <!-- Formulário de Login -->
+                <form id="loginForm" class="auth-form">
+                    <h2>Entrar</h2>
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Senha</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Entrar</button>
+                    <div class="auth-error hidden" id="loginError"></div>
+                </form>
+
+                <!-- Formulário de Registro -->
+                <form id="registerForm" class="auth-form hidden">
+                    <h2>Criar Conta</h2>
+                    <div class="form-group">
+                        <label for="registerName">Nome</label>
+                        <input type="text" id="registerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Senha (mínimo 6 caracteres)</label>
+                        <input type="password" id="registerPassword" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Registrar</button>
+                    <div class="auth-error hidden" id="registerError"></div>
+                </form>
+            </div>
         </div>
     </main>
 

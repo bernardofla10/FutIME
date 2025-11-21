@@ -43,6 +43,25 @@ async function fetchData(endpoint) {
     return await response.json();
 }
 
+async function fetchDataAuth(endpoint, options = {}) {
+    const user = getCurrentUser();
+    if (!user) throw new Error('Usuário não autenticado');
+
+    const headers = {
+        'Authorization': 'Basic ' + btoa(user.email + ':' + user.password),
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers
+    });
+
+    if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
+    return await response.json();
+}
+
 function formatDate(dateString) {
     if (!dateString) return '—';
     const date = new Date(dateString);
@@ -84,6 +103,252 @@ async function loadAllData() {
     } catch (error) {
         console.error('Erro ao carregar dados gerais:', error);
         throw error;
+    }
+}
+
+// =======================
+// AUTENTICAÇÃO DE USUÁRIO
+// =======================
+
+let currentUser = null;
+
+// Elementos DOM de autenticação
+const btnLogin = document.getElementById('btnLogin');
+const btnLogout = document.getElementById('btnLogout');
+const userProfile = document.getElementById('userProfile');
+const userName = document.getElementById('userName');
+const authModal = document.getElementById('authModal');
+const closeModal = document.querySelector('.close-modal');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const authTabs = document.querySelectorAll('.auth-tab');
+const userFavorites = document.getElementById('userFavorites');
+
+function getCurrentUser() {
+    if (!currentUser) {
+        const stored = localStorage.getItem('futimeUser');
+        if (stored) {
+            currentUser = JSON.parse(stored);
+        }
+    }
+    return currentUser;
+}
+
+function saveUser(user) {
+    currentUser = user;
+    localStorage.setItem('futimeUser', JSON.stringify(user));
+    updateUserUI();
+}
+
+function clearUser() {
+    currentUser = null;
+    localStorage.removeItem('futimeUser');
+    updateUserUI();
+}
+
+function updateUserUI() {
+    if (currentUser) {
+        btnLogin.classList.add('hidden');
+        userProfile.classList.remove('hidden');
+        userName.textContent = currentUser.nome;
+        userFavorites.classList.remove('hidden');
+        loadUserFavorites();
+    } else {
+        btnLogin.classList.remove('hidden');
+        userProfile.classList.add('hidden');
+        userFavorites.classList.add('hidden');
+    }
+}
+
+async function handleLogin(email, senha) {
+    try {
+        const response = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, senha })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || 'Erro ao fazer login');
+        }
+
+        const userData = await response.json();
+        saveUser({ ...userData, email, password: senha });
+        authModal.classList.add('hidden');
+        document.getElementById('loginError').classList.add('hidden');
+        loginForm.reset();
+        return true;
+    } catch (error) {
+        document.getElementById('loginError').textContent = error.message;
+        document.getElementById('loginError').classList.remove('hidden');
+        return false;
+    }
+}
+
+async function handleRegister(nome, email, senha) {
+    try {
+        const response = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, email, senha })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || 'Erro ao registrar');
+        }
+
+        const userData = await response.json();
+        saveUser({ ...userData, email, password: senha });
+        authModal.classList.add('hidden');
+        document.getElementById('registerError').classList.add('hidden');
+        registerForm.reset();
+        return true;
+    } catch (error) {
+        document.getElementById('registerError').textContent = error.message;
+        document.getElementById('registerError').classList.remove('hidden');
+        return false;
+    }
+}
+
+function handleLogout() {
+    clearUser();
+}
+
+// Event Listeners de Autenticação
+btnLogin.addEventListener('click', () => {
+    authModal.classList.remove('hidden');
+});
+
+closeModal.addEventListener('click', () => {
+    authModal.classList.add('hidden');
+});
+
+authModal.addEventListener('click', (e) => {
+    if (e.target === authModal) {
+        authModal.classList.add('hidden');
+    }
+});
+
+authTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        authTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        if (targetTab === 'login') {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+        } else {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+        }
+    });
+});
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const senha = document.getElementById('loginPassword').value;
+    await handleLogin(email, senha);
+});
+
+registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('registerName').value;
+    const email = document.getElementById('registerEmail').value;
+    const senha = document.getElementById('registerPassword').value;
+    await handleRegister(nome, email, senha);
+});
+
+btnLogout.addEventListener('click', handleLogout);
+
+// =======================
+// FAVORITOS DO USUÁRIO
+// =======================
+
+async function loadUserFavorites() {
+    if (!currentUser) return;
+
+    try {
+        const perfil = await fetchDataAuth('/usuarios/perfil');
+
+        // Atualizar time do coração
+        const favoriteTeamContent = document.getElementById('favoriteTeamContent');
+        if (perfil.clubeFavorito) {
+            favoriteTeamContent.innerHTML = `
+                <div class="favorite-team-card clickable" onclick="navigateTo('clube', ${perfil.clubeFavorito.id})">
+                    <h4>${perfil.clubeFavorito.nome}</h4>
+                    <p>Cidade: ${perfil.clubeFavorito.cidade || '—'}</p>
+                    <p>Estádio: ${perfil.clubeFavorito.estadio?.nome || '—'}</p>
+                </div>
+            `;
+        } else {
+            favoriteTeamContent.innerHTML = '<p class="no-favorite">Você ainda não selecionou seu time do coração.</p>';
+        }
+
+        // Atualizar jogadores favoritos
+        const favoritePlayersContent = document.getElementById('favoritePlayersContent');
+        if (perfil.jogadoresObservados && perfil.jogadoresObservados.length > 0) {
+            favoritePlayersContent.innerHTML = perfil.jogadoresObservados.map(jogador => `
+                <div class="favorite-player-card clickable" onclick="navigateTo('jogador', ${jogador.id})">
+                    <h4>${jogador.apelido || jogador.nomeCompleto}</h4>
+                    <p>Time: ${jogador.clube?.nome || '—'}</p>
+                    <p>Posição: ${jogador.posicao || '—'}</p>
+                    <p>Gols: ${jogador.golsTotais ?? 0} | Assistências: ${jogador.assistenciasTotais ?? 0}</p>
+                    <button class="btn-remove-favorite" onclick="event.stopPropagation(); removerJogadorFavorito(${jogador.id})">Remover</button>
+                </div>
+            `).join('');
+        } else {
+            favoritePlayersContent.innerHTML = '<p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>';
+        }
+    } catch (error) {
+        console.error('Erro ao carregar favoritos:', error);
+    }
+}
+
+async function definirTimeCoracao(clubeId) {
+    if (!currentUser) {
+        alert('Você precisa estar logado para definir seu time do coração!');
+        return;
+    }
+
+    try {
+        await fetchDataAuth(`/usuarios/meu-time/${clubeId}`, { method: 'PUT' });
+        alert('Time do coração definido com sucesso!');
+        loadUserFavorites();
+    } catch (error) {
+        console.error('Erro ao definir time do coração:', error);
+        alert('Erro ao definir time do coração');
+    }
+}
+
+async function adicionarJogadorFavorito(jogadorId) {
+    if (!currentUser) {
+        alert('Você precisa estar logado para adicionar jogadores favoritos!');
+        return;
+    }
+
+    try {
+        await fetchDataAuth(`/usuarios/olheiro/${jogadorId}`, { method: 'POST' });
+        alert('Jogador adicionado aos favoritos!');
+        loadUserFavorites();
+    } catch (error) {
+        console.error('Erro ao adicionar jogador favorito:', error);
+        alert('Erro ao adicionar jogador favorito');
+    }
+}
+
+async function removerJogadorFavorito(jogadorId) {
+    if (!currentUser) return;
+
+    try {
+        await fetchDataAuth(`/usuarios/olheiro/${jogadorId}`, { method: 'DELETE' });
+        loadUserFavorites();
+    } catch (error) {
+        console.error('Erro ao remover jogador favorito:', error);
+        alert('Erro ao remover jogador favorito');
     }
 }
 
@@ -261,6 +526,7 @@ function renderTeamDetails(clube) {
             ${clube.cidade ? `Cidade: ${clube.cidade} &bull;` : ''}
             Estádio: <span class="clickable" onclick="navigateTo('estadio', ${clube.estadio?.id})">${clube.estadio?.nome || '—'}</span>
         </p>
+        ${currentUser ? `<button class="btn-favorite" onclick="definirTimeCoracao(${clube.id})">❤️ Definir como Time do Coração</button>` : ''}
 
         <div class="details-grid">
             <div class="details-block">
@@ -296,6 +562,7 @@ function renderPlayerDetails(jogador) {
             Posição: <strong>${jogador.posicao || '—'}</strong> &bull;
             Time: <span class="clickable" onclick="navigateTo('clube', ${jogador.clube?.id})"><strong>${jogador.clube?.nome || '—'}</strong></span>
         </p>
+        ${currentUser ? `<button class="btn-favorite" onclick="adicionarJogadorFavorito(${jogador.id})">⭐ Adicionar aos Favoritos</button>` : ''}
 
         <div class="details-grid">
             <div class="details-block">
@@ -581,6 +848,9 @@ document.querySelectorAll('#categoryRow .pill').forEach(btn => {
 async function init() {
     showLoading();
     try {
+        // Inicializar autenticação
+        updateUserUI();
+
         await loadCompeticoes();
         await loadAllData();
         clearResults();
