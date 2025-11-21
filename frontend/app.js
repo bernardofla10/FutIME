@@ -33,9 +33,9 @@ const homeView = document.getElementById('homeView');
 const btnBack = document.getElementById('btnBack');
 const btnHome = document.getElementById('btnHome');
 
-// =======================
+// ======================
 // UTILITÁRIOS
-// =======================
+// ======================
 
 async function fetchData(endpoint) {
     const response = await fetch(`${API_BASE}${endpoint}`);
