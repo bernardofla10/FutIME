@@ -1,5 +1,6 @@
 package com.futime.labprog.futimeapi.controller;
 
+import com.futime.labprog.futimeapi.dto.LoginDTO;
 import com.futime.labprog.futimeapi.dto.RegisterDTO;
 import com.futime.labprog.futimeapi.dto.UsuarioResponseDTO;
 import com.futime.labprog.futimeapi.service.UsuarioService;
@@ -27,5 +28,11 @@ public class AuthenticationController {
     public ResponseEntity<UsuarioResponseDTO> register(@RequestBody @Valid RegisterDTO registerDTO) {
         UsuarioResponseDTO novoUsuario = usuarioService.registerUser(registerDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<UsuarioResponseDTO> login(@RequestBody @Valid LoginDTO loginDTO) {
+        UsuarioResponseDTO usuario = usuarioService.login(loginDTO);
+        return ResponseEntity.ok(usuario);
     }
 }

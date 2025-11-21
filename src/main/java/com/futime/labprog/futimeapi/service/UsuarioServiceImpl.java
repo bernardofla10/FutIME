@@ -3,6 +3,7 @@ package com.futime.labprog.futimeapi.service;
 import com.futime.labprog.futimeapi.dto.ClubeResponseDTO;
 import com.futime.labprog.futimeapi.dto.EstadioResponseDTO;
 import com.futime.labprog.futimeapi.dto.JogadorResponseDTO;
+import com.futime.labprog.futimeapi.dto.LoginDTO;
 import com.futime.labprog.futimeapi.dto.RegisterDTO;
 import com.futime.labprog.futimeapi.dto.UsuarioResponseDTO;
 import com.futime.labprog.futimeapi.model.Clube;
@@ -13,6 +14,7 @@ import com.futime.labprog.futimeapi.repository.ClubeRepository;
 import com.futime.labprog.futimeapi.repository.JogadorRepository;
 import com.futime.labprog.futimeapi.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,11 +44,28 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public UsuarioResponseDTO registerUser(RegisterDTO registerDTO) {
-        // TODO: Verificar se email já existe
+        // Verificar se email já existe
+        if (usuarioRepository.findByEmail(registerDTO.email()).isPresent()) {
+            throw new IllegalArgumentException("Email já cadastrado");
+        }
+
         String senhaCriptografada = passwordEncoder.encode(registerDTO.senha());
         Usuario novoUsuario = new Usuario(registerDTO.email(), senhaCriptografada, registerDTO.nome());
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
         return toResponseDTO(usuarioSalvo);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UsuarioResponseDTO login(LoginDTO loginDTO) {
+        Usuario usuario = usuarioRepository.findByEmail(loginDTO.email())
+                .orElseThrow(() -> new BadCredentialsException("Email ou senha inválidos"));
+
+        if (!passwordEncoder.matches(loginDTO.senha(), usuario.getPassword())) {
+            throw new BadCredentialsException("Email ou senha inválidos");
+        }
+
+        return toResponseDTO(usuario);
     }
 
     @Override

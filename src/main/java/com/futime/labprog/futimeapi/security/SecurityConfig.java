@@ -20,7 +20,8 @@ public class SecurityConfig {
                 .cors(withDefaults()) // Habilita CORS no Spring Security
                 .csrf(csrf -> csrf.disable()) // Desabilita CSRF pois é uma API REST
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                        .requestMatchers("/auth/register", "/auth/login", "/v3/api-docs/**", "/swagger-ui/**",
+                                "/swagger-ui.html")
                         .permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/competicoes/**", "/clubes/**",
                                 "/jogadores/**", "/estadios/**", "/partidas/**")

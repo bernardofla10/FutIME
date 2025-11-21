@@ -643,3 +643,305 @@ footer {
     font-size: 0.85rem;
     color: #888;
 }
+
+/* ===========================
+   USER AUTHENTICATION STYLES
+   =========================== */
+
+/* Login Button & User Profile */
+.btn-login {
+    background: linear-gradient(135deg, #00ffaa, #00cc88);
+    border: none;
+    color: #021017;
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-login:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 255, 170, 0.3);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-profile span {
+    color: #00ffaa;
+    font-weight: 500;
+}
+
+.btn-logout {
+    background: transparent;
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    color: #ff6b6b;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.btn-logout:hover {
+    background: rgba(255, 107, 107, 0.1);
+    border-color: #ff6b6b;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: rgba(15, 30, 45, 0.98);
+    border: 1px solid rgba(0, 255, 170, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 450px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.8rem;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close-modal:hover {
+    color: #ff6b6b;
+}
+
+/* Auth Tabs */
+.auth-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-tab {
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 0.8rem 1.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    border-bottom: 2px solid transparent;
+}
+
+.auth-tab.active {
+    color: #00ffaa;
+    border-bottom-color: #00ffaa;
+}
+
+.auth-tab:hover {
+    color: #00ffaa;
+}
+
+/* Auth Forms */
+.auth-form h2 {
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    color: #c6d0e3;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 255, 170, 0.3);
+    background: rgba(20, 35, 50, 0.8);
+    color: #ffffff;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #00ffaa;
+    background: rgba(20, 35, 50, 1);
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.2);
+}
+
+.btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, #00ffaa, #00cc88);
+    border: none;
+    color: #021017;
+    padding: 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 255, 170, 0.3);
+}
+
+.auth-error {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: #ff6b6b;
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.auth-error.hidden {
+    display: none;
+}
+
+/* User Favorites Section */
+.user-favorites {
+    max-width: 1400px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: rgba(12, 26, 42, 0.96);
+    border-radius: 18px;
+    border: 1px solid rgba(0, 255, 170, 0.25);
+}
+
+.user-favorites h2 {
+    font-size: 2rem;
+    color: #00ffaa;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.favorite-team h3,
+.favorite-players h3 {
+    font-size: 1.3rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.favorite-team-card,
+.favorite-player-card {
+    background: rgba(20, 35, 50, 0.95);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 255, 170, 0.2);
+    transition: all 0.3s;
+    margin-bottom: 1rem;
+}
+
+.favorite-team-card:hover,
+.favorite-player-card:hover {
+    transform: translateY(-3px);
+    border-color: #00ffaa;
+    box-shadow: 0 10px 30px rgba(0, 255, 170, 0.2);
+}
+
+.favorite-team-card h4,
+.favorite-player-card h4 {
+    color: #00ffaa;
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+}
+
+.favorite-team-card p,
+.favorite-player-card p {
+    color: #c6d0e3;
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+}
+
+.no-favorite {
+    color: #888;
+    font-style: italic;
+    padding: 1rem;
+    text-align: center;
+}
+
+.btn-remove-favorite {
+    background: transparent;
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    color: #ff6b6b;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: 0.8rem;
+    transition: all 0.3s;
+}
+
+.btn-remove-favorite:hover {
+    background: rgba(255, 107, 107, 0.1);
+    border-color: #ff6b6b;
+}
+
+/* Favorite Button in Details */
+.btn-favorite {
+    background: linear-gradient(135deg, #00ffaa, #00cc88);
+    border: none;
+    color: #021017;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1rem 0;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-favorite:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 255, 170, 0.3);
+}
+
+.hidden {
+    display: none;
+}
