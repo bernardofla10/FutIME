@@ -815,6 +815,7 @@ function renderEstadios() {
             <div class="card-body">
                 <p><span>Cidade:</span> ${estadio.cidade}</p>
                 <p><span>País:</span> ${estadio.pais}</p>
+                <p><span>Capacidade:</span> ${estadio.capacidade.toLocaleString('pt-BR')}</p>
             </div>
         </article>
     `).join('');
@@ -822,44 +823,127 @@ function renderEstadios() {
 }
 
 // =======================
-// LISTENERS GERAIS
+// PERFIL DO USUÁRIO
 // =======================
 
-btnBack.addEventListener('click', showHome);
-btnHome.addEventListener('click', (e) => {
-    e.preventDefault();
-    showHome();
+const profileView = document.getElementById('profileView');
+const btnCloseProfile = document.getElementById('btnCloseProfile');
+const profileName = document.getElementById('profileName');
+const profileEmail = document.getElementById('profileEmail');
+const profilePassword = document.getElementById('profilePassword');
+const btnTogglePassword = document.getElementById('btnTogglePassword');
+
+// Navegação para o Perfil
+userName.addEventListener('click', () => {
+    if (currentUser) {
+        showProfileView();
+    }
 });
 
-document.querySelectorAll('#categoryRow .pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('#categoryRow .pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedCategory = btn.dataset.category;
-        updateHint();
-        render();
-    });
+btnCloseProfile.addEventListener('click', () => {
+    profileView.classList.add('hidden');
+    homeView.classList.remove('hidden');
 });
+
+function showProfileView() {
+    homeView.classList.add('hidden');
+    detailView.classList.add('hidden');
+    searchResults.classList.add('hidden');
+    profileView.classList.remove('hidden');
+
+    renderUserProfile();
+}
+
+async function renderUserProfile() {
+    if (!currentUser) return;
+
+    profileName.textContent = currentUser.nome;
+    profileEmail.textContent = currentUser.email;
+
+    // Senha (recuperada do cache local da sessão)
+    profilePassword.value = currentUser.password || '';
+
+    // Carregar favoritos
+    try {
+        const perfil = await fetchDataAuth('/usuarios/perfil');
+        renderProfileFavorites(perfil);
+    } catch (error) {
+        console.error('Erro ao carregar perfil:', error);
+    }
+}
+
+// Toggle Senha
+btnTogglePassword.addEventListener('click', () => {
+    const type = profilePassword.getAttribute('type') === 'password' ? 'text' : 'password';
+    profilePassword.setAttribute('type', type);
+    btnTogglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+});
+
+function renderProfileFavorites(perfil) {
+    // Time do Coração
+    const profileTeamContent = document.getElementById('profileTeamContent');
+    if (perfil.clubeFavorito) {
+        profileTeamContent.innerHTML = `
+            <div class="favorite-team-card clickable" onclick="navigateTo('clube', ${perfil.clubeFavorito.id})">
+                <h4>${perfil.clubeFavorito.nome}</h4>
+                <p>Cidade: ${perfil.clubeFavorito.cidade || '—'}</p>
+                <p>Estádio: ${perfil.clubeFavorito.estadio?.nome || '—'}</p>
+            </div>
+        `;
+    } else {
+        profileTeamContent.innerHTML = '<p class="no-favorite">Você ainda não selecionou seu time do coração.</p>';
+    }
+
+    // Jogadores Favoritos
+    const profilePlayersContent = document.getElementById('profilePlayersContent');
+    if (perfil.jogadoresObservados && perfil.jogadoresObservados.length > 0) {
+        profilePlayersContent.innerHTML = perfil.jogadoresObservados.map(jogador => `
+            <div class="favorite-player-card clickable" onclick="navigateTo('jogador', ${jogador.id})">
+                <h4>${jogador.apelido || jogador.nomeCompleto}</h4>
+                <p>Time: ${jogador.clube?.nome || '—'}</p>
+                <p>Posição: ${jogador.posicao || '—'}</p>
+                <p>Gols: ${jogador.golsTotais ?? 0} | Assistências: ${jogador.assistenciasTotais ?? 0}</p>
+                <button class="btn-remove-favorite" onclick="event.stopPropagation(); removerJogadorFavorito(${jogador.id})">Remover</button>
+            </div>
+        `).join('');
+    } else {
+        profilePlayersContent.innerHTML = '<p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>';
+    }
+}
 
 // =======================
 // INICIALIZAÇÃO
 // =======================
 
-async function init() {
-    showLoading();
-    try {
-        // Inicializar autenticação
-        updateUserUI();
+// Event Listeners Globais
+btnHome.addEventListener('click', (e) => {
+    e.preventDefault();
+    showHome();
+});
 
+btnBack.addEventListener('click', showHome);
+
+document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', function () {
+        // Lógica de seleção de categoria
+        if (this.parentElement.id === 'categoryRow') {
+            document.querySelectorAll('#categoryRow .pill').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            selectedCategory = this.dataset.category;
+            updateHint();
+            render();
+        }
+    });
+});
+
+// Inicializar
+(async function init() {
+    try {
+        updateUserUI();
         await loadCompeticoes();
         await loadAllData();
-        clearResults();
-        resultsTitleEl.textContent = 'Bem-vindo ao FutIME';
-        resultsSubtitleEl.textContent = 'Selecione os filtros acima para começar a explorar.';
     } catch (error) {
-        showError('Erro ao carregar dados iniciais. Verifique se o backend está rodando.');
         console.error('Erro na inicialização:', error);
+        showError('Falha ao carregar dados iniciais. Verifique se a API está rodando.');
     }
-}
-
-window.addEventListener('DOMContentLoaded', init);
+})();

@@ -43,6 +43,56 @@
             <div id="detailContent"></div>
         </section>
 
+        <!-- Visão de Perfil do Usuário -->
+        <section id="profileView" class="profile-view hidden">
+            <div class="profile-header">
+                <h2>Meu Perfil</h2>
+                <button id="btnCloseProfile" class="btn-back">← Voltar</button>
+            </div>
+
+            <div class="profile-content">
+                <div class="profile-info-card">
+                    <h3>Dados Pessoais</h3>
+                    <div class="info-group">
+                        <label>Nome</label>
+                        <p id="profileName" class="info-value">Carregando...</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Email</label>
+                        <p id="profileEmail" class="info-value">Carregando...</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Senha</label>
+                        <div class="password-display">
+                            <input type="password" id="profilePassword" class="info-value-input" readonly value="">
+                            <button id="btnTogglePassword" class="btn-icon" title="Mostrar/Ocultar senha">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção de Favoritos (Reutilizada/Movida para cá) -->
+                <div class="user-favorites-profile">
+                    <h3>Meus Favoritos</h3>
+                    <div class="favorites-grid">
+                        <div class="favorite-team" id="profileFavoriteTeam">
+                            <h4>Time do Coração ❤️</h4>
+                            <div id="profileTeamContent">
+                                <p class="no-favorite">Você ainda não selecionou seu time do coração.</p>
+                            </div>
+                        </div>
+                        <div class="favorite-players" id="profileFavoritePlayers">
+                            <h4>Jogadores Favoritos ⭐</h4>
+                            <div id="profilePlayersContent">
+                                <p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Visão Principal (Home) -->
         <div id="homeView">
             <section class="hero">
