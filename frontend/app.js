@@ -1,4 +1,4 @@
-// =======================
+﻿// =======================
 // CONFIGURAÇÃO DA API
 // =======================
 const API_BASE = 'http://localhost:8081';
@@ -800,6 +800,96 @@ function renderJogadores(comp) {
     cardsContainerEl.innerHTML = html;
 }
 
+// =======================
+// NAVEGAÇÃO E SCROLL SPY
+// =======================
+
+function setupNavigation() {
+    const navLinks = document.querySelectorAll('.nav-links a');
+    const sections = [
+        { id: 'homeView', navId: 'btnHome' }, // Hero/Home section
+        { id: 'explorar', navId: null }, // Explorar section (link href="#explorar")
+        { id: 'sobre', navId: null } // Sobre section (link href="#sobre")
+    ];
+
+    // Smooth Scroll com Offset
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            if (href.startsWith('#')) {
+                e.preventDefault();
+                const targetId = href.substring(1);
+
+                // Se for link para Início (href="#"), rolar para o topo
+                if (targetId === '') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    const headerOffset = 80;
+                    const elementPosition = targetSection.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        });
+    });
+    // Scroll Spy
+    window.addEventListener('scroll', () => {
+        let current = '';
+        const scrollPosition = window.scrollY + 100; // Offset para detecção antecipada
+        const bottomOfPage = window.innerHeight + window.scrollY >= document.body.offsetHeight - 10;
+
+        // Mapeamento manual das seções para verificar
+        const homeSection = document.getElementById('homeView'); // Usando homeView como topo
+        const exploreSection = document.getElementById('explorar');
+        const aboutSection = document.getElementById('sobre');
+
+        if (homeSection && scrollPosition >= homeSection.offsetTop) {
+            current = 'home'; // Default
+        }
+
+        if (exploreSection && scrollPosition >= exploreSection.offsetTop) {
+            current = 'explorar';
+        }
+
+        if (aboutSection && scrollPosition >= aboutSection.offsetTop) {
+            current = 'sobre';
+        }
+
+        // Se chegou no fim da página, força 'sobre'
+        if (bottomOfPage) {
+            current = 'sobre';
+        }
+
+        // Se estivermos no topo absoluto, força home
+        if (window.scrollY < 50) {
+            current = 'home';
+        }
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            const href = link.getAttribute('href');
+
+            if (current === 'home' && href === '#') {
+                link.classList.add('active');
+            } else if (current === 'explorar' && href === '#explorar') {
+                link.classList.add('active');
+            } else if (current === 'sobre' && href === '#sobre') {
+                link.classList.add('active');
+            }
+        });
+    });
+}
+
+
+
 function renderEstadios() {
     if (!allEstadios.length) {
         cardsContainerEl.innerHTML = '<p>Não há estádios cadastrados.</p>';
@@ -940,6 +1030,7 @@ document.querySelectorAll('.pill').forEach(pill => {
 (async function init() {
     try {
         updateUserUI();
+        setupNavigation();
         await loadCompeticoes();
         await loadAllData();
     } catch (error) {
