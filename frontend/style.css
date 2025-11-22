@@ -43,6 +43,7 @@ nav {
     display: flex;
     gap: 2rem;
     list-style: none;
+    align-items: center;
 }
 
 .nav-links a {
@@ -71,7 +72,10 @@ nav {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, rgba(3, 10, 20, 0.8), rgba(5, 20, 35, 0.9));
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('background.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 .hero::before {
@@ -672,9 +676,23 @@ footer {
     gap: 1rem;
 }
 
-.user-profile span {
+#userName {
     color: #00ffaa;
-    font-weight: 500;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border: 1px solid rgba(0, 255, 170, 0.5);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: rgba(0, 255, 170, 0.05);
+    user-select: none;
+    display: inline-block;
+}
+
+#userName:hover {
+    background: rgba(0, 255, 170, 0.15);
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.2);
+    transform: translateY(-1px);
 }
 
 .btn-logout {
@@ -944,4 +962,110 @@ footer {
 
 .hidden {
     display: none;
+}
+
+/* Profile View Styles */
+.profile-view {
+    max-width: 1000px;
+    margin: 100px auto 2rem;
+    padding: 0 2rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.profile-header h2 {
+    font-size: 2rem;
+    color: #00ffaa;
+}
+
+.profile-content {
+    display: grid;
+    gap: 2rem;
+}
+
+.profile-info-card {
+    background: rgba(20, 35, 50, 0.95);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(0, 255, 170, 0.2);
+}
+
+.profile-info-card h3 {
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.info-group {
+    margin-bottom: 1.5rem;
+}
+
+.info-group label {
+    display: block;
+    color: #9aa4b2;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.password-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-value-input {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 500;
+    width: 200px;
+    outline: none;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.2rem;
+    transition: transform 0.2s;
+}
+
+.btn-icon:hover {
+    transform: scale(1.1);
+}
+
+.user-favorites-profile {
+    background: rgba(12, 26, 42, 0.96);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(0, 255, 170, 0.25);
+}
+
+.user-favorites-profile h3 {
+    color: #00ffaa;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.user-favorites-profile h4 {
+    color: #ffffff;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
 }

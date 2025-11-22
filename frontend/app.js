@@ -1,4 +1,4 @@
-// =======================
+﻿// =======================
 // CONFIGURAÇÃO DA API
 // =======================
 const API_BASE = 'http://localhost:8081';
@@ -16,6 +16,8 @@ let allClubes = [];
 let allJogadores = [];
 let allEstadios = [];
 let allPartidas = [];
+
+let isLoadingData = true; // Estado de carregamento
 
 // =======================
 // ELEMENTOS DOM
@@ -88,6 +90,7 @@ async function loadCompeticoes() {
 }
 
 async function loadAllData() {
+    isLoadingData = true;
     try {
         const [clubes, jogadores, estadios, partidas] = await Promise.all([
             fetchData('/clubes'),
@@ -103,6 +106,12 @@ async function loadAllData() {
     } catch (error) {
         console.error('Erro ao carregar dados gerais:', error);
         throw error;
+    } finally {
+        isLoadingData = false;
+        // Se o usuário já estiver em uma tela que precisa de dados, re-renderiza
+        if (selectedCategory && selectedCompetition && selectedSeason) {
+            render();
+        }
     }
 }
 
@@ -752,6 +761,10 @@ function render() {
 }
 
 function renderClubes(comp) {
+    if (isLoadingData) {
+        cardsContainerEl.innerHTML = '<div class="loading">Carregando times...</div>';
+        return;
+    }
     const clubesFiltered = comp.clubes || [];
     if (!clubesFiltered.length) {
         cardsContainerEl.innerHTML = '<p>Não há times cadastrados.</p>';
@@ -776,6 +789,10 @@ function renderClubes(comp) {
 }
 
 function renderJogadores(comp) {
+    if (isLoadingData) {
+        cardsContainerEl.innerHTML = '<div class="loading">Carregando jogadores...</div>';
+        return;
+    }
     const clubeIds = (comp.clubes || []).map(c => c.id);
     const jogadoresFiltered = allJogadores.filter(j => j.clube && clubeIds.includes(j.clube.id));
 
@@ -800,7 +817,101 @@ function renderJogadores(comp) {
     cardsContainerEl.innerHTML = html;
 }
 
+// =======================
+// NAVEGAÇÃO E SCROLL SPY
+// =======================
+
+function setupNavigation() {
+    const navLinks = document.querySelectorAll('.nav-links a');
+    const sections = [
+        { id: 'homeView', navId: 'btnHome' }, // Hero/Home section
+        { id: 'explorar', navId: null }, // Explorar section (link href="#explorar")
+        { id: 'sobre', navId: null } // Sobre section (link href="#sobre")
+    ];
+
+    // Smooth Scroll com Offset
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            if (href.startsWith('#')) {
+                e.preventDefault();
+                const targetId = href.substring(1);
+
+                // Se for link para Início (href="#"), rolar para o topo
+                if (targetId === '') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    const headerOffset = 80;
+                    const elementPosition = targetSection.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        });
+    });
+    // Scroll Spy
+    window.addEventListener('scroll', () => {
+        let current = '';
+        const scrollPosition = window.scrollY + 100; // Offset para detecção antecipada
+        const bottomOfPage = window.innerHeight + window.scrollY >= document.body.offsetHeight - 10;
+
+        // Mapeamento manual das seções para verificar
+        const homeSection = document.getElementById('homeView'); // Usando homeView como topo
+        const exploreSection = document.getElementById('explorar');
+        const aboutSection = document.getElementById('sobre');
+
+        if (homeSection && scrollPosition >= homeSection.offsetTop) {
+            current = 'home'; // Default
+        }
+
+        if (exploreSection && scrollPosition >= exploreSection.offsetTop) {
+            current = 'explorar';
+        }
+
+        if (aboutSection && scrollPosition >= aboutSection.offsetTop) {
+            current = 'sobre';
+        }
+
+        // Se chegou no fim da página, força 'sobre'
+        if (bottomOfPage) {
+            current = 'sobre';
+        }
+
+        // Se estivermos no topo absoluto, força home
+        if (window.scrollY < 50) {
+            current = 'home';
+        }
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            const href = link.getAttribute('href');
+
+            if (current === 'home' && href === '#') {
+                link.classList.add('active');
+            } else if (current === 'explorar' && href === '#explorar') {
+                link.classList.add('active');
+            } else if (current === 'sobre' && href === '#sobre') {
+                link.classList.add('active');
+            }
+        });
+    });
+}
+
+
+
 function renderEstadios() {
+    if (isLoadingData) {
+        cardsContainerEl.innerHTML = '<div class="loading">Carregando estádios...</div>';
+        return;
+    }
     if (!allEstadios.length) {
         cardsContainerEl.innerHTML = '<p>Não há estádios cadastrados.</p>';
         return;
@@ -822,44 +933,128 @@ function renderEstadios() {
 }
 
 // =======================
-// LISTENERS GERAIS
+// PERFIL DO USUÁRIO
 // =======================
 
-btnBack.addEventListener('click', showHome);
-btnHome.addEventListener('click', (e) => {
-    e.preventDefault();
-    showHome();
+const profileView = document.getElementById('profileView');
+const btnCloseProfile = document.getElementById('btnCloseProfile');
+const profileName = document.getElementById('profileName');
+const profileEmail = document.getElementById('profileEmail');
+const profilePassword = document.getElementById('profilePassword');
+const btnTogglePassword = document.getElementById('btnTogglePassword');
+
+// Navegação para o Perfil
+userName.addEventListener('click', () => {
+    if (currentUser) {
+        showProfileView();
+    }
 });
 
-document.querySelectorAll('#categoryRow .pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('#categoryRow .pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedCategory = btn.dataset.category;
-        updateHint();
-        render();
-    });
+btnCloseProfile.addEventListener('click', () => {
+    profileView.classList.add('hidden');
+    homeView.classList.remove('hidden');
 });
+
+function showProfileView() {
+    homeView.classList.add('hidden');
+    detailView.classList.add('hidden');
+    searchResults.classList.add('hidden');
+    profileView.classList.remove('hidden');
+
+    renderUserProfile();
+}
+
+async function renderUserProfile() {
+    if (!currentUser) return;
+
+    profileName.textContent = currentUser.nome;
+    profileEmail.textContent = currentUser.email;
+
+    // Senha (recuperada do cache local da sessão)
+    profilePassword.value = currentUser.password || '';
+
+    // Carregar favoritos
+    try {
+        const perfil = await fetchDataAuth('/usuarios/perfil');
+        renderProfileFavorites(perfil);
+    } catch (error) {
+        console.error('Erro ao carregar perfil:', error);
+    }
+}
+
+// Toggle Senha
+btnTogglePassword.addEventListener('click', () => {
+    const type = profilePassword.getAttribute('type') === 'password' ? 'text' : 'password';
+    profilePassword.setAttribute('type', type);
+    btnTogglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+});
+
+function renderProfileFavorites(perfil) {
+    // Time do Coração
+    const profileTeamContent = document.getElementById('profileTeamContent');
+    if (perfil.clubeFavorito) {
+        profileTeamContent.innerHTML = `
+            <div class="favorite-team-card clickable" onclick="navigateTo('clube', ${perfil.clubeFavorito.id})">
+                <h4>${perfil.clubeFavorito.nome}</h4>
+                <p>Cidade: ${perfil.clubeFavorito.cidade || '—'}</p>
+                <p>Estádio: ${perfil.clubeFavorito.estadio?.nome || '—'}</p>
+            </div>
+        `;
+    } else {
+        profileTeamContent.innerHTML = '<p class="no-favorite">Você ainda não selecionou seu time do coração.</p>';
+    }
+
+    // Jogadores Favoritos
+    const profilePlayersContent = document.getElementById('profilePlayersContent');
+    if (perfil.jogadoresObservados && perfil.jogadoresObservados.length > 0) {
+        profilePlayersContent.innerHTML = perfil.jogadoresObservados.map(jogador => `
+            <div class="favorite-player-card clickable" onclick="navigateTo('jogador', ${jogador.id})">
+                <h4>${jogador.apelido || jogador.nomeCompleto}</h4>
+                <p>Time: ${jogador.clube?.nome || '—'}</p>
+                <p>Posição: ${jogador.posicao || '—'}</p>
+                <p>Gols: ${jogador.golsTotais ?? 0} | Assistências: ${jogador.assistenciasTotais ?? 0}</p>
+                <button class="btn-remove-favorite" onclick="event.stopPropagation(); removerJogadorFavorito(${jogador.id})">Remover</button>
+            </div>
+        `).join('');
+    } else {
+        profilePlayersContent.innerHTML = '<p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>';
+    }
+}
 
 // =======================
 // INICIALIZAÇÃO
 // =======================
 
-async function init() {
-    showLoading();
-    try {
-        // Inicializar autenticação
-        updateUserUI();
+// Event Listeners Globais
+btnHome.addEventListener('click', (e) => {
+    e.preventDefault();
+    showHome();
+});
 
+btnBack.addEventListener('click', showHome);
+
+document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', function () {
+        // Lógica de seleção de categoria
+        if (this.parentElement.id === 'categoryRow') {
+            document.querySelectorAll('#categoryRow .pill').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            selectedCategory = this.dataset.category;
+            updateHint();
+            render();
+        }
+    });
+});
+
+// Inicializar
+(async function init() {
+    try {
+        updateUserUI();
+        setupNavigation();
         await loadCompeticoes();
         await loadAllData();
-        clearResults();
-        resultsTitleEl.textContent = 'Bem-vindo ao FutIME';
-        resultsSubtitleEl.textContent = 'Selecione os filtros acima para começar a explorar.';
     } catch (error) {
-        showError('Erro ao carregar dados iniciais. Verifique se o backend está rodando.');
         console.error('Erro na inicialização:', error);
+        showError('Falha ao carregar dados iniciais. Verifique se a API está rodando.');
     }
-}
-
-window.addEventListener('DOMContentLoaded', init);
+})();
