@@ -905,7 +905,6 @@ function renderEstadios() {
             <div class="card-body">
                 <p><span>Cidade:</span> ${estadio.cidade}</p>
                 <p><span>País:</span> ${estadio.pais}</p>
-                <p><span>Capacidade:</span> ${estadio.capacidade.toLocaleString('pt-BR')}</p>
             </div>
         </article>
     `).join('');
