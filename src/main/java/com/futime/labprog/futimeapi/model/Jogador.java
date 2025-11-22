@@ -42,26 +42,71 @@ public class Jogador {
     }
 
     // Getters e Setters atualizados/adicionados
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public String getNomeCompleto() { return nomeCompleto; }
-    public void setNomeCompleto(String nomeCompleto) { this.nomeCompleto = nomeCompleto; }
-    public String getApelido() { return apelido; }
-    public void setApelido(String apelido) { this.apelido = apelido; }
-    public LocalDate getDataNascimento() { return dataNascimento; }
-    public void setDataNascimento(LocalDate dataNascimento) { this.dataNascimento = dataNascimento; }
-    public String getPosicao() { return posicao; }
-    public void setPosicao(String posicao) { this.posicao = posicao; }
-    public Clube getClube() { return clube; }
-    public void setClube(Clube clube) { this.clube = clube; }
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getNomeCompleto() {
+        return nomeCompleto;
+    }
+
+    public void setNomeCompleto(String nomeCompleto) {
+        this.nomeCompleto = nomeCompleto;
+    }
+
+    public String getApelido() {
+        return apelido;
+    }
+
+    public void setApelido(String apelido) {
+        this.apelido = apelido;
+    }
+
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = dataNascimento;
+    }
+
+    public String getPosicao() {
+        return posicao;
+    }
+
+    public void setPosicao(String posicao) {
+        this.posicao = posicao;
+    }
+
+    public Clube getClube() {
+        return clube;
+    }
+
+    public void setClube(Clube clube) {
+        this.clube = clube;
+    }
 
     // Getter/Setter para valorDeMercado
-    public Double getValorDeMercado() { return valorDeMercado; }
-    public void setValorDeMercado(Double valorDeMercado) { this.valorDeMercado = valorDeMercado; }
+    public Double getValorDeMercado() {
+        return valorDeMercado;
+    }
+
+    public void setValorDeMercado(Double valorDeMercado) {
+        this.valorDeMercado = valorDeMercado;
+    }
 
     // Getter/Setter para a nova coleção de estatísticas
-    public List<EstatisticasJogadorCompeticao> getEstatisticas() { return estatisticas; }
-    public void setEstatisticas(List<EstatisticasJogadorCompeticao> estatisticas) { this.estatisticas = estatisticas; }
-    
+    public List<EstatisticasJogadorCompeticao> getEstatisticas() {
+        return estatisticas;
+    }
+
+    public void setEstatisticas(List<EstatisticasJogadorCompeticao> estatisticas) {
+        this.estatisticas = estatisticas;
+    }
+
     // TODO: Implementar equals() e hashCode()
 }

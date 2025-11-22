@@ -39,6 +39,36 @@ const btnHome = document.getElementById('btnHome');
 // UTILITÁRIOS
 // ======================
 
+function normalizeFileName(name) {
+    if (!name) return '';
+    return name.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+}
+
+function getClubImgUrl(club) {
+    if (!club || !club.nome) return 'assets/placeholder_club.png';
+    const normalized = normalizeFileName(club.nome);
+    return `assets/clubs/${normalized}.png`;
+}
+
+function getPlayerImgUrl(player) {
+    const name = player.apelido || player.nomeCompleto;
+    if (!name) return 'assets/placeholder_player.png';
+    const normalized = normalizeFileName(name);
+    return `assets/players/${normalized}.jpg`;
+}
+
+function getPlayerImgTag(player) {
+    const normalized = normalizeFileName(player.apelido || player.nomeCompleto);
+    // Tenta jpg primeiro, se falhar tenta png, se falhar usa placeholder (opcional)
+    return `<img src="assets/players/${normalized}.jpg" 
+            class="card-image player-img" 
+            alt="${player.apelido || player.nomeCompleto}"
+            onerror="this.onerror=null; this.src='assets/players/${normalized}.png';">`;
+}
+
 async function fetchData(endpoint) {
     const response = await fetch(`${API_BASE}${endpoint}`);
     if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
@@ -288,9 +318,11 @@ async function loadUserFavorites() {
         if (perfil.clubeFavorito) {
             favoriteTeamContent.innerHTML = `
                 <div class="favorite-team-card clickable" onclick="navigateTo('clube', ${perfil.clubeFavorito.id})">
-                    <h4>${perfil.clubeFavorito.nome}</h4>
-                    <p>Cidade: ${perfil.clubeFavorito.cidade || '—'}</p>
-                    <p>Estádio: ${perfil.clubeFavorito.estadio?.nome || '—'}</p>
+                    <img src="${getClubImgUrl(perfil.clubeFavorito)}" class="favorite-img" alt="${perfil.clubeFavorito.nome}">
+                    <div>
+                        <h4>${perfil.clubeFavorito.nome}</h4>
+                        <p>Cidade: ${perfil.clubeFavorito.cidade || '—'}</p>
+                    </div>
                 </div>
             `;
         } else {
@@ -300,15 +332,20 @@ async function loadUserFavorites() {
         // Atualizar jogadores favoritos
         const favoritePlayersContent = document.getElementById('favoritePlayersContent');
         if (perfil.jogadoresObservados && perfil.jogadoresObservados.length > 0) {
-            favoritePlayersContent.innerHTML = perfil.jogadoresObservados.map(jogador => `
+            favoritePlayersContent.innerHTML = perfil.jogadoresObservados.map(jogador => {
+                const normalized = normalizeFileName(jogador.apelido || jogador.nomeCompleto);
+                return `
                 <div class="favorite-player-card clickable" onclick="navigateTo('jogador', ${jogador.id})">
-                    <h4>${jogador.apelido || jogador.nomeCompleto}</h4>
-                    <p>Time: ${jogador.clube?.nome || '—'}</p>
-                    <p>Posição: ${jogador.posicao || '—'}</p>
-                    <p>Gols: ${jogador.golsTotais ?? 0} | Assistências: ${jogador.assistenciasTotais ?? 0}</p>
-                    <button class="btn-remove-favorite" onclick="event.stopPropagation(); removerJogadorFavorito(${jogador.id})">Remover</button>
+                    <img src="assets/players/${normalized}.jpg" class="favorite-img" 
+                         onerror="this.onerror=null; this.src='assets/players/${normalized}.png';" 
+                         alt="${jogador.apelido}">
+                    <div>
+                        <h4>${jogador.apelido || jogador.nomeCompleto}</h4>
+                        <p>Time: ${jogador.clube?.nome || '—'}</p>
+                        <button class="btn-remove-favorite" onclick="event.stopPropagation(); removerJogadorFavorito(${jogador.id})">Remover</button>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
         } else {
             favoritePlayersContent.innerHTML = '<p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>';
         }
@@ -421,7 +458,7 @@ function handleSearch(query) {
     // Buscar Clubes
     allClubes.forEach(c => {
         if (c.nome.toLowerCase().includes(lowerQuery)) {
-            results.push({ type: 'clube', name: c.nome, id: c.id, label: 'Time' });
+            results.push({ type: 'clube', name: c.nome, id: c.id, label: 'Time', img: getClubImgUrl(c) });
         }
     });
 
@@ -429,7 +466,15 @@ function handleSearch(query) {
     allJogadores.forEach(j => {
         if ((j.nomeCompleto && j.nomeCompleto.toLowerCase().includes(lowerQuery)) ||
             (j.apelido && j.apelido.toLowerCase().includes(lowerQuery))) {
-            results.push({ type: 'jogador', name: j.apelido || j.nomeCompleto, id: j.id, label: 'Jogador' });
+            const normalized = normalizeFileName(j.apelido || j.nomeCompleto);
+            results.push({
+                type: 'jogador',
+                name: j.apelido || j.nomeCompleto,
+                id: j.id,
+                label: 'Jogador',
+                img: `assets/players/${normalized}.jpg`,
+                isPlayer: true
+            });
         }
     });
 
@@ -460,8 +505,21 @@ function renderSearchResults(results) {
     results.slice(0, 10).forEach(res => {
         const div = document.createElement('div');
         div.className = 'search-item';
+
+        let imgHtml = '';
+        if (res.img) {
+            if (res.isPlayer) {
+                imgHtml = `<img src="${res.img}" class="search-item-img" onerror="this.onerror=null; this.src='${res.img.replace('.jpg', '.png')}';">`;
+            } else {
+                imgHtml = `<img src="${res.img}" class="search-item-img">`;
+            }
+        }
+
         div.innerHTML = `
-            <span class="search-item-name">${res.name}</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                ${imgHtml}
+                <span class="search-item-name">${res.name}</span>
+            </div>
             <span class="search-item-type">${res.label}</span>
         `;
         div.addEventListener('click', () => {
@@ -487,8 +545,7 @@ function renderTeamDetails(clube) {
         (p.visitante && p.visitante.id === clube.id)
     );
 
-    // Competições que o time disputa (baseado nas partidas ou na associação da competição)
-    // Vamos usar allCompetitions e ver onde o clube está
+    // Competições que o time disputa
     const competicoes = allCompetitions.filter(c => c.clubes && c.clubes.some(cl => cl.id === clube.id));
 
     let partidasHtml = '';
@@ -517,11 +574,14 @@ function renderTeamDetails(clube) {
         partidasHtml = '<p>Nenhuma partida registrada.</p>';
     }
 
-    let jogadoresHtml = jogadores.map(j => `
-        <li class="clickable" onclick="navigateTo('jogador', ${j.id})">
-            ${j.apelido || j.nomeCompleto} ${j.posicao ? `<small>(${j.posicao})</small>` : ''}
+    let jogadoresHtml = jogadores.map(j => {
+        const normalized = normalizeFileName(j.apelido || j.nomeCompleto);
+        return `
+        <li class="clickable player-list-item" onclick="navigateTo('jogador', ${j.id})">
+            <img src="assets/players/${normalized}.jpg" class="mini-avatar" onerror="this.onerror=null; this.src='assets/players/${normalized}.png';">
+            <span>${j.apelido || j.nomeCompleto} ${j.posicao ? `<small>(${j.posicao})</small>` : ''}</span>
         </li>
-    `).join('');
+    `}).join('');
 
     let competicoesHtml = competicoes.map(c => `
         <li class="clickable" onclick="navigateTo('competicao', ${c.id})">
@@ -530,12 +590,17 @@ function renderTeamDetails(clube) {
     `).join('');
 
     detailContent.innerHTML = `
-        <h2>${clube.nome}</h2>
-        <p class="details-meta">
-            ${clube.cidade ? `Cidade: ${clube.cidade} &bull;` : ''}
-            Estádio: <span class="clickable" onclick="navigateTo('estadio', ${clube.estadio?.id})">${clube.estadio?.nome || '—'}</span>
-        </p>
-        ${currentUser ? `<button class="btn-favorite" onclick="definirTimeCoracao(${clube.id})">❤️ Definir como Time do Coração</button>` : ''}
+        <div class="detail-header-content">
+            <img src="${getClubImgUrl(clube)}" class="detail-logo" alt="${clube.nome}">
+            <div>
+                <h2>${clube.nome}</h2>
+                <p class="details-meta">
+                    ${clube.cidade ? `Cidade: ${clube.cidade} &bull;` : ''}
+                    Estádio: <span class="clickable" onclick="navigateTo('estadio', ${clube.estadio?.id})">${clube.estadio?.nome || '—'}</span>
+                </p>
+                ${currentUser ? `<button class="btn-favorite" onclick="definirTimeCoracao(${clube.id})">❤️ Definir como Time do Coração</button>` : ''}
+            </div>
+        </div>
 
         <div class="details-grid">
             <div class="details-block">
@@ -544,7 +609,7 @@ function renderTeamDetails(clube) {
             </div>
             <div class="details-block">
                 <h4>Elenco</h4>
-                <ul>${jogadoresHtml || '<li>Sem jogadores cadastrados</li>'}</ul>
+                <ul class="player-list">${jogadoresHtml || '<li>Sem jogadores cadastrados</li>'}</ul>
             </div>
             <div class="details-block">
                 <h4>Competições</h4>
@@ -564,14 +629,23 @@ function renderPlayerDetails(jogador) {
         </li>
     `).join('');
 
+    const normalized = normalizeFileName(jogador.apelido || jogador.nomeCompleto);
+
     detailContent.innerHTML = `
-        <h2>${jogador.nomeCompleto}</h2>
-        <p class="details-meta">
-            Apelido: <strong>${jogador.apelido || '—'}</strong> &bull;
-            Posição: <strong>${jogador.posicao || '—'}</strong> &bull;
-            Time: <span class="clickable" onclick="navigateTo('clube', ${jogador.clube?.id})"><strong>${jogador.clube?.nome || '—'}</strong></span>
-        </p>
-        ${currentUser ? `<button class="btn-favorite" onclick="adicionarJogadorFavorito(${jogador.id})">⭐ Adicionar aos Favoritos</button>` : ''}
+        <div class="detail-header-content">
+            <img src="assets/players/${normalized}.jpg" class="detail-player-img" 
+                 onerror="this.onerror=null; this.src='assets/players/${normalized}.png';" 
+                 alt="${jogador.apelido || jogador.nomeCompleto}">
+            <div>
+                <h2>${jogador.nomeCompleto}</h2>
+                <p class="details-meta">
+                    Apelido: <strong>${jogador.apelido || '—'}</strong> &bull;
+                    Posição: <strong>${jogador.posicao || '—'}</strong> &bull;
+                    Time: <span class="clickable" onclick="navigateTo('clube', ${jogador.clube?.id})"><strong>${jogador.clube?.nome || '—'}</strong></span>
+                </p>
+                ${currentUser ? `<button class="btn-favorite" onclick="adicionarJogadorFavorito(${jogador.id})">⭐ Adicionar aos Favoritos</button>` : ''}
+            </div>
+        </div>
 
         <div class="details-grid">
             <div class="details-block">
@@ -579,7 +653,7 @@ function renderPlayerDetails(jogador) {
                 <ul>
                     <li>Gols: ${jogador.golsTotais ?? 0}</li>
                     <li>Assistências: ${jogador.assistenciasTotais ?? 0}</li>
-                    <li>Valor de Mercado: ${formatCurrency(jogador.valorDeMercado)}</li>
+                    <li>Valor de Mercado: <span class="market-value">${formatCurrency(jogador.valorDeMercado)}</span></li>
                 </ul>
             </div>
             <div class="details-block">
@@ -605,9 +679,10 @@ function renderStadiumDetails(estadio) {
             <div class="details-block">
                 <h4>Time Mandante</h4>
                 ${dono ? `
-                    <p class="clickable" onclick="navigateTo('clube', ${dono.id})">
+                    <div class="clickable" onclick="navigateTo('clube', ${dono.id})" style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${getClubImgUrl(dono)}" class="mini-avatar">
                         <strong>${dono.nome}</strong>
-                    </p>
+                    </div>
                 ` : '<p>Nenhum time vinculado como mandante.</p>'}
             </div>
         </div>
@@ -618,14 +693,10 @@ function renderCompetitionDetails(competicao) {
     // Times da competição
     const times = competicao.clubes || [];
 
-    // Partidas da competição
-    // Assumindo que podemos filtrar partidas por competição se tivermos essa info no DTO de partida
-    // Se não tiver, teremos que confiar que allPartidas tem tudo e tentar cruzar dados
-    // Por enquanto, vamos listar os times
-
     let timesHtml = times.map(t => `
-        <li class="clickable" onclick="navigateTo('clube', ${t.id})">
-            ${t.nome}
+        <li class="clickable player-list-item" onclick="navigateTo('clube', ${t.id})">
+            <img src="${getClubImgUrl(t)}" class="mini-avatar">
+            <span>${t.nome}</span>
         </li>
     `).join('');
 
@@ -635,7 +706,7 @@ function renderCompetitionDetails(competicao) {
         <div class="details-grid">
             <div class="details-block">
                 <h4>Times Participantes</h4>
-                <ul>${timesHtml || '<li>Sem times registrados</li>'}</ul>
+                <ul class="player-list">${timesHtml || '<li>Sem times registrados</li>'}</ul>
             </div>
         </div>
     `;
@@ -774,9 +845,12 @@ function renderClubes(comp) {
     const html = clubesFiltered.map(clube => `
         <article class="card clickable" onclick="navigateTo('clube', ${clube.id})">
             <div class="card-header">
-                <div>
-                    <div class="card-title">${clube.nome}</div>
-                    <div class="results-subtitle">Cidade: ${clube.estadio?.cidade || '—'}</div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="${getClubImgUrl(clube)}" class="card-image" alt="${clube.nome}">
+                    <div>
+                        <div class="card-title">${clube.nome}</div>
+                        <div class="results-subtitle">Cidade: ${clube.estadio?.cidade || '—'}</div>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -804,13 +878,18 @@ function renderJogadores(comp) {
     const html = jogadoresFiltered.map(jogador => `
         <article class="card clickable" onclick="navigateTo('jogador', ${jogador.id})">
             <div class="card-header">
-                <div class="card-title">${jogador.apelido || jogador.nomeCompleto}</div>
-                <span class="badge">${jogador.posicao || '—'}</span>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    ${getPlayerImgTag(jogador)}
+                    <div>
+                        <div class="card-title">${jogador.apelido || jogador.nomeCompleto}</div>
+                        <span class="badge">${jogador.posicao || '—'}</span>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <p><span>Time:</span> ${jogador.clube?.nome || '—'}</p>
                 <p><span>Gols:</span> ${jogador.golsTotais ?? 0}</p>
-                <p><span>Assistências:</span> ${jogador.assistenciasTotais ?? 0}</p>
+                <p><span>Valor:</span> ${formatCurrency(jogador.valorDeMercado)}</p>
             </div>
         </article>
     `).join('');
