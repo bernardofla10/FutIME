@@ -17,6 +17,8 @@ let allJogadores = [];
 let allEstadios = [];
 let allPartidas = [];
 
+let isLoadingData = true; // Estado de carregamento
+
 // =======================
 // ELEMENTOS DOM
 // =======================
@@ -88,6 +90,7 @@ async function loadCompeticoes() {
 }
 
 async function loadAllData() {
+    isLoadingData = true;
     try {
         const [clubes, jogadores, estadios, partidas] = await Promise.all([
             fetchData('/clubes'),
@@ -103,6 +106,12 @@ async function loadAllData() {
     } catch (error) {
         console.error('Erro ao carregar dados gerais:', error);
         throw error;
+    } finally {
+        isLoadingData = false;
+        // Se o usuário já estiver em uma tela que precisa de dados, re-renderiza
+        if (selectedCategory && selectedCompetition && selectedSeason) {
+            render();
+        }
     }
 }
 
@@ -752,6 +761,10 @@ function render() {
 }
 
 function renderClubes(comp) {
+    if (isLoadingData) {
+        cardsContainerEl.innerHTML = '<div class="loading">Carregando times...</div>';
+        return;
+    }
     const clubesFiltered = comp.clubes || [];
     if (!clubesFiltered.length) {
         cardsContainerEl.innerHTML = '<p>Não há times cadastrados.</p>';
@@ -776,6 +789,10 @@ function renderClubes(comp) {
 }
 
 function renderJogadores(comp) {
+    if (isLoadingData) {
+        cardsContainerEl.innerHTML = '<div class="loading">Carregando jogadores...</div>';
+        return;
+    }
     const clubeIds = (comp.clubes || []).map(c => c.id);
     const jogadoresFiltered = allJogadores.filter(j => j.clube && clubeIds.includes(j.clube.id));
 
@@ -891,6 +908,10 @@ function setupNavigation() {
 
 
 function renderEstadios() {
+    if (isLoadingData) {
+        cardsContainerEl.innerHTML = '<div class="loading">Carregando estádios...</div>';
+        return;
+    }
     if (!allEstadios.length) {
         cardsContainerEl.innerHTML = '<p>Não há estádios cadastrados.</p>';
         return;
