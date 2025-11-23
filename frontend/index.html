@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUTIME - Portal de Estatísticas do Futebol Brasileiro</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -93,6 +94,42 @@
             </div>
         </section>
 
+        <!-- Visão de Comparação de Jogadores -->
+        <section id="playerComparisonView" class="player-comparison-view hidden">
+            <div class="comparison-header">
+                <h2>⚔️ Comparador de Jogadores (Head-to-Head)</h2>
+                <button id="btnCloseComparison" class="btn-back">← Voltar</button>
+            </div>
+
+            <p class="comparison-description">
+                Uma ferramenta para colocar dois jogadores lado a lado.
+            </p>
+
+            <div class="comparison-selectors">
+                <div class="player-selector">
+                    <label for="player1Select">Jogador 1</label>
+                    <select id="player1Select" class="player-select">
+                        <option value="">Selecione um jogador</option>
+                    </select>
+                </div>
+
+                <div class="vs-separator">VS</div>
+
+                <div class="player-selector">
+                    <label for="player2Select">Jogador 2</label>
+                    <select id="player2Select" class="player-select">
+                        <option value="">Selecione um jogador</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="btnCompare" class="btn-compare" disabled>Comparar Jogadores</button>
+
+            <div id="comparisonResult" class="comparison-result hidden">
+                <!-- Resultado da comparação será exibido aqui -->
+            </div>
+        </section>
+
         <!-- Visão Principal (Home) -->
         <div id="homeView">
             <section class="hero">
@@ -129,11 +166,37 @@
                             <button class="pill" data-category="estadios">Estádios</button>
                         </div>
                     </div>
+
+                    <div class="explorer-box">
+                        <h3>Ferramentas</h3>
+                        <div class="pill-row">
+                            <button class="pill" id="btnOpenComparison">⚔️ Comparar Jogadores</button>
+                        </div>
+                    </div>
                 </div>
 
                 <p class="explorer-hint" id="selectionHint">
                     Selecione a competição e a temporada para começar. Depois, escolha uma categoria para explorar.
                 </p>
+            </section>
+
+            <!-- Dashboard de Estatísticas -->
+            <section id="dashboardSection" class="dashboard-section hidden">
+                <h2 class="section-title">📊 Estatísticas da Temporada</h2>
+                <div class="dashboard-grid">
+                    <div class="chart-card">
+                        <h3>⚽ Top Artilheiros</h3>
+                        <canvas id="topScorersChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>👟 Top Assistentes</h3>
+                        <canvas id="topAssistersChart"></canvas>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h3>💰 Jogadores Mais Valiosos</h3>
+                        <canvas id="marketValueChart"></canvas>
+                    </div>
+                </div>
             </section>
 
             <section class="results" id="resultsSection">
