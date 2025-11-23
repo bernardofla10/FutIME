@@ -14,6 +14,8 @@ Este projeto consiste em uma API RESTful feita com Spring Boot (Java 21) e um Fr
 
 O backend deve ser iniciado primeiro para que a API esteja disponível.
 
+Primeiramente, crie uma pasta ```secrets.properties``` dentro da pasta ```futimeapi``` com a senha do banco de dados: ```FUTIME_DB_PASSWORD_DEPLOY=senha_BD```.
+
 No terminal (na raiz do projeto), execute:
 
 **Windows:**
