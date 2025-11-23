@@ -116,11 +116,19 @@ def get_or_create_club(team_data, stadium_id):
     if result:
         return result[0]
     
+    # Get stadium city
+    stadium_city = None
+    if stadium_id:
+        cur.execute("SELECT cidade FROM estadios WHERE id = %s", (stadium_id,))
+        city_result = cur.fetchone()
+        if city_result:
+            stadium_city = city_result[0]
+    
     print(f"Creating club: {name}")
     try:
         cur.execute(
             "INSERT INTO clubes (nome, sigla, cidade, pais, estadio_id) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-            (name, team_data.get("code", name[:3].upper()), None, "Brasil", stadium_id)
+            (name, team_data.get("code", name[:3].upper()), stadium_city, "Brasil", stadium_id)
         )
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
