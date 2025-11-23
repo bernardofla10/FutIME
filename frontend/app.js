@@ -586,7 +586,7 @@ function renderTeamDetails(clube) {
     `}).join('');
 
     let competicoesHtml = competicoes.map(c => `
-        <li class="clickable" onclick="navigateTo('competicao', ${c.id})">
+        <li>
             🏆 ${c.nome} <span class="badge">${c.temporada}</span>
         </li>
     `).join('');
@@ -777,59 +777,7 @@ function renderCompetitionDetails(competicao) {
 
     let content = `<h2>🏆 ${competicao.nome} (${competicao.temporada})</h2>`;
 
-    // Show standings table for pontos corridos competitions
-    if (competicao.tipoCompeticao === 'PONTOS_CORRIDOS') {
-        const standings = calculateStandings(times, competicao.id);
-
-        if (standings.length > 0 && standings.some(s => s.jogos > 0)) {
-            content += `
-                <div class="standings-container">
-                    <h3>📈 Classificação</h3>
-                    <div class="standings-table-wrapper">
-                        <table class="standings-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Time</th>
-                                    <th>J</th>
-                                    <th>P</th>
-                                    <th>V</th>
-                                    <th>E</th>
-                                    <th>D</th>
-                                    <th>SG</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${standings.map((s, index) => `
-                                    <tr class="clickable" onclick="navigateTo('clube', ${s.clube.id})">
-                                        <td class="position">${index + 1}</td>
-                                        <td class="team-cell">
-                                            <img src="${getClubImgUrl(s.clube)}" class="team-logo-small" alt="${s.clube.nome}">
-                                            <span class="team-name">${s.clube.nome}</span>
-                                        </td>
-                                        <td>${s.jogos}</td>
-                                        <td class="points"><strong>${s.pontos}</strong></td>
-                                        <td>${s.vitorias}</td>
-                                        <td>${s.empates}</td>
-                                        <td>${s.derrotas}</td>
-                                        <td class="${s.saldoGols > 0 ? 'positive' : s.saldoGols < 0 ? 'negative' : ''}">${s.saldoGols > 0 ? '+' : ''}${s.saldoGols}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="legend">
-                        <span><strong>J</strong>: Jogos</span>
-                        <span><strong>P</strong>: Pontos</span>
-                        <span><strong>V</strong>: Vitórias</span>
-                        <span><strong>E</strong>: Empates</span>
-                        <span><strong>D</strong>: Derrotas</span>
-                        <span><strong>SG</strong>: Saldo de Gols</span>
-                    </div>
-                </div>
-            `;
-        }
-    }
+    // Standings table removed as per user request
 
     let timesHtml = times.map(t => `
         <li class="clickable player-list-item" onclick="navigateTo('clube', ${t.id})">
