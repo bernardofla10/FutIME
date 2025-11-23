@@ -107,6 +107,7 @@ public class JogadorServiceImpl implements JogadorService {
                                 jogador.getDataNascimento(),
                                 jogador.getPosicao(),
                                 jogador.getValorDeMercado(),
+                                jogador.getImageUrl(),
                                 clubeDTO,
                                 golsTotais,
                                 assistenciasTotais,

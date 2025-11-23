@@ -1,10 +1,10 @@
 ﻿// =======================
-// CONFIGURAÇÃO DA API
+// CONFIGURA��O DA API
 // =======================
 const API_BASE = 'http://localhost:8081';
 
 // =======================
-// ESTADO DA APLICAÇÃO
+// ESTADO DA APLICA��O
 // =======================
 let selectedCompetitionName = null;
 let selectedCompetition = null;
@@ -36,7 +36,7 @@ const btnBack = document.getElementById('btnBack');
 const btnHome = document.getElementById('btnHome');
 
 // ======================
-// UTILITÁRIOS
+// UTILIT�RIOS
 // ======================
 
 function normalizeFileName(name) {
@@ -62,8 +62,9 @@ function getPlayerImgUrl(player) {
 
 function getPlayerImgTag(player) {
     const normalized = normalizeFileName(player.apelido || player.nomeCompleto);
-    // Tenta jpg primeiro, se falhar tenta png, se falhar usa placeholder (opcional)
-    return `<img src="assets/players/${normalized}.jpg" 
+    // Usa imageUrl da API se existir, sen�o tenta local
+    const src = player.imageUrl || `assets/players/${normalized}.jpg`;
+    return `<img src="${src}" 
             class="card-image player-img" 
             alt="${player.apelido || player.nomeCompleto}"
             onerror="this.onerror=null; this.src='assets/players/${normalized}.png';">`;
@@ -77,7 +78,7 @@ async function fetchData(endpoint) {
 
 async function fetchDataAuth(endpoint, options = {}) {
     const user = getCurrentUser();
-    if (!user) throw new Error('Usuário não autenticado');
+    if (!user) throw new Error('Usu�rio n�o autenticado');
 
     const headers = {
         'Authorization': 'Basic ' + btoa(user.email + ':' + user.password),
@@ -95,14 +96,14 @@ async function fetchDataAuth(endpoint, options = {}) {
 }
 
 function formatDate(dateString) {
-    if (!dateString) return '—';
+    if (!dateString) return '�';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('pt-BR').format(date);
 }
 
 function formatCurrency(value) {
-    if (value === null || value === undefined) return '—';
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    if (value === null || value === undefined) return '�';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'EUR' }).format(value);
 }
 
 // =======================
@@ -114,7 +115,7 @@ async function loadCompeticoes() {
         allCompetitions = await fetchData('/competicoes');
         renderCompetitionButtons();
     } catch (error) {
-        console.error('Erro ao carregar competições:', error);
+        console.error('Erro ao carregar competi��es:', error);
         throw error;
     }
 }
@@ -138,7 +139,7 @@ async function loadAllData() {
         throw error;
     } finally {
         isLoadingData = false;
-        // Se o usuário já estiver em uma tela que precisa de dados, re-renderiza
+        // Se o usu�rio j� estiver em uma tela que precisa de dados, re-renderiza
         if (selectedCategory && selectedCompetition && selectedSeason) {
             render();
         }
@@ -146,12 +147,12 @@ async function loadAllData() {
 }
 
 // =======================
-// AUTENTICAÇÃO DE USUÁRIO
+// AUTENTICA��O DE USU�RIO
 // =======================
 
 let currentUser = null;
 
-// Elementos DOM de autenticação
+// Elementos DOM de autentica��o
 const btnLogin = document.getElementById('btnLogin');
 const btnLogout = document.getElementById('btnLogout');
 const userProfile = document.getElementById('userProfile');
@@ -255,7 +256,7 @@ function handleLogout() {
     clearUser();
 }
 
-// Event Listeners de Autenticação
+// Event Listeners de Autentica��o
 btnLogin.addEventListener('click', () => {
     authModal.classList.remove('hidden');
 });
@@ -304,7 +305,7 @@ registerForm.addEventListener('submit', async (e) => {
 btnLogout.addEventListener('click', handleLogout);
 
 // =======================
-// FAVORITOS DO USUÁRIO
+// FAVORITOS DO USU�RIO
 // =======================
 
 async function loadUserFavorites() {
@@ -313,7 +314,7 @@ async function loadUserFavorites() {
     try {
         const perfil = await fetchDataAuth('/usuarios/perfil');
 
-        // Atualizar time do coração
+        // Atualizar time do cora��o
         const favoriteTeamContent = document.getElementById('favoriteTeamContent');
         if (perfil.clubeFavorito) {
             favoriteTeamContent.innerHTML = `
@@ -321,12 +322,12 @@ async function loadUserFavorites() {
                     <img src="${getClubImgUrl(perfil.clubeFavorito)}" class="favorite-img" alt="${perfil.clubeFavorito.nome}">
                     <div>
                         <h4>${perfil.clubeFavorito.nome}</h4>
-                        <p>Cidade: ${perfil.clubeFavorito.cidade || '—'}</p>
+                        <p>Cidade: ${perfil.clubeFavorito.cidade || '�'}</p>
                     </div>
                 </div>
             `;
         } else {
-            favoriteTeamContent.innerHTML = '<p class="no-favorite">Você ainda não selecionou seu time do coração.</p>';
+            favoriteTeamContent.innerHTML = '<p class="no-favorite">Voc� ainda n�o selecionou seu time do cora��o.</p>';
         }
 
         // Atualizar jogadores favoritos
@@ -336,18 +337,18 @@ async function loadUserFavorites() {
                 const normalized = normalizeFileName(jogador.apelido || jogador.nomeCompleto);
                 return `
                 <div class="favorite-player-card clickable" onclick="navigateTo('jogador', ${jogador.id})">
-                    <img src="assets/players/${normalized}.jpg" class="favorite-img" 
+                    <img src="${jogador.imageUrl || `assets/players/${normalized}.jpg`}" class="favorite-img" 
                          onerror="this.onerror=null; this.src='assets/players/${normalized}.png';" 
                          alt="${jogador.apelido}">
                     <div>
                         <h4>${jogador.apelido || jogador.nomeCompleto}</h4>
-                        <p>Time: ${jogador.clube?.nome || '—'}</p>
+                        <p>Time: ${jogador.clube?.nome || '�'}</p>
                         <button class="btn-remove-favorite" onclick="event.stopPropagation(); removerJogadorFavorito(${jogador.id})">Remover</button>
                     </div>
                 </div>
             `}).join('');
         } else {
-            favoritePlayersContent.innerHTML = '<p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>';
+            favoritePlayersContent.innerHTML = '<p class="no-favorite">Voc� ainda n�o adicionou jogadores favoritos.</p>';
         }
     } catch (error) {
         console.error('Erro ao carregar favoritos:', error);
@@ -356,23 +357,23 @@ async function loadUserFavorites() {
 
 async function definirTimeCoracao(clubeId) {
     if (!currentUser) {
-        alert('Você precisa estar logado para definir seu time do coração!');
+        alert('Voc� precisa estar logado para definir seu time do cora��o!');
         return;
     }
 
     try {
         await fetchDataAuth(`/usuarios/meu-time/${clubeId}`, { method: 'PUT' });
-        alert('Time do coração definido com sucesso!');
+        alert('Time do cora��o definido com sucesso!');
         loadUserFavorites();
     } catch (error) {
-        console.error('Erro ao definir time do coração:', error);
-        alert('Erro ao definir time do coração');
+        console.error('Erro ao definir time do cora��o:', error);
+        alert('Erro ao definir time do cora��o');
     }
 }
 
 async function adicionarJogadorFavorito(jogadorId) {
     if (!currentUser) {
-        alert('Você precisa estar logado para adicionar jogadores favoritos!');
+        alert('Voc� precisa estar logado para adicionar jogadores favoritos!');
         return;
     }
 
@@ -399,7 +400,7 @@ async function removerJogadorFavorito(jogadorId) {
 }
 
 // =======================
-// ROTEAMENTO E NAVEGAÇÃO
+// ROTEAMENTO E NAVEGA��O
 // =======================
 
 function showHome() {
@@ -478,17 +479,17 @@ function handleSearch(query) {
         }
     });
 
-    // Buscar Estádios
+    // Buscar Est�dios
     allEstadios.forEach(e => {
         if (e.nome.toLowerCase().includes(lowerQuery)) {
-            results.push({ type: 'estadio', name: e.nome, id: e.id, label: 'Estádio' });
+            results.push({ type: 'estadio', name: e.nome, id: e.id, label: 'Est�dio' });
         }
     });
 
-    // Buscar Competições
+    // Buscar Competi��es
     allCompetitions.forEach(c => {
         if (c.nome.toLowerCase().includes(lowerQuery)) {
-            results.push({ type: 'competicao', name: `${c.nome} ${c.temporada}`, id: c.id, label: 'Competição' });
+            results.push({ type: 'competicao', name: `${c.nome} ${c.temporada}`, id: c.id, label: 'Competi��o' });
         }
     });
 
@@ -507,11 +508,12 @@ function renderSearchResults(results) {
         div.className = 'search-item';
 
         let imgHtml = '';
-        if (res.img) {
+        if (res.img || res.imageUrl) {
+            const src = res.imageUrl || res.img;
             if (res.isPlayer) {
-                imgHtml = `<img src="${res.img}" class="search-item-img" onerror="this.onerror=null; this.src='${res.img.replace('.jpg', '.png')}';">`;
+                imgHtml = `<img src="${src}" class="search-item-img" onerror="this.onerror=null; this.src='${src.replace('.jpg', '.png')}';">`;
             } else {
-                imgHtml = `<img src="${res.img}" class="search-item-img">`;
+                imgHtml = `<img src="${src}" class="search-item-img">`;
             }
         }
 
@@ -532,7 +534,7 @@ function renderSearchResults(results) {
 }
 
 // =======================
-// RENDERIZAÇÃO DETALHADA
+// RENDERIZA��O DETALHADA
 // =======================
 
 function renderTeamDetails(clube) {
@@ -545,7 +547,7 @@ function renderTeamDetails(clube) {
         (p.visitante && p.visitante.id === clube.id)
     );
 
-    // Competições que o time disputa
+    // Competi��es que o time disputa
     const competicoes = allCompetitions.filter(c => c.clubes && c.clubes.some(cl => cl.id === clube.id));
 
     let partidasHtml = '';
@@ -578,7 +580,7 @@ function renderTeamDetails(clube) {
         const normalized = normalizeFileName(j.apelido || j.nomeCompleto);
         return `
         <li class="clickable player-list-item" onclick="navigateTo('jogador', ${j.id})">
-            <img src="assets/players/${normalized}.jpg" class="mini-avatar" onerror="this.onerror=null; this.src='assets/players/${normalized}.png';">
+            <img src="${j.imageUrl || `assets/players/${normalized}.jpg`}" class="mini-avatar" onerror="this.onerror=null; this.src='assets/players/${normalized}.png';">
             <span>${j.apelido || j.nomeCompleto} ${j.posicao ? `<small>(${j.posicao})</small>` : ''}</span>
         </li>
     `}).join('');
@@ -596,15 +598,15 @@ function renderTeamDetails(clube) {
                 <h2>${clube.nome}</h2>
                 <p class="details-meta">
                     ${clube.cidade ? `Cidade: ${clube.cidade} &bull;` : ''}
-                    Estádio: <span class="clickable" onclick="navigateTo('estadio', ${clube.estadio?.id})">${clube.estadio?.nome || '—'}</span>
+                    Est�dio: <span class="clickable" onclick="navigateTo('estadio', ${clube.estadio?.id})">${clube.estadio?.nome || '�'}</span>
                 </p>
-                ${currentUser ? `<button class="btn-favorite" onclick="definirTimeCoracao(${clube.id})">❤️ Definir como Time do Coração</button>` : ''}
+                ${currentUser ? `<button class="btn-favorite" onclick="definirTimeCoracao(${clube.id})">?? Definir como Time do Cora��o</button>` : ''}
             </div>
         </div>
 
         <div class="details-grid">
             <div class="details-block">
-                <h4>Últimas Partidas</h4>
+                <h4>�ltimas Partidas</h4>
                 ${partidasHtml}
             </div>
             <div class="details-block">
@@ -612,8 +614,8 @@ function renderTeamDetails(clube) {
                 <ul class="player-list">${jogadoresHtml || '<li>Sem jogadores cadastrados</li>'}</ul>
             </div>
             <div class="details-block">
-                <h4>Competições</h4>
-                <ul>${competicoesHtml || '<li>Não disputa competições registradas</li>'}</ul>
+                <h4>Competi��es</h4>
+                <ul>${competicoesHtml || '<li>N�o disputa competi��es registradas</li>'}</ul>
             </div>
         </div>
     `;
@@ -625,7 +627,7 @@ function renderPlayerDetails(jogador) {
     let estatHtml = estatisticas.map(e => `
         <li>
             <strong>${e.nomeCompeticao}</strong>: 
-            ${e.gols} gols, ${e.assistencias} assistências
+            ${e.gols} gols, ${e.assistencias} assist�ncias
         </li>
     `).join('');
 
@@ -633,46 +635,46 @@ function renderPlayerDetails(jogador) {
 
     detailContent.innerHTML = `
         <div class="detail-header-content">
-            <img src="assets/players/${normalized}.jpg" class="detail-player-img" 
+            <img src="${jogador.imageUrl || `assets/players/${normalized}.jpg`}" class="detail-player-img" 
                  onerror="this.onerror=null; this.src='assets/players/${normalized}.png';" 
                  alt="${jogador.apelido || jogador.nomeCompleto}">
             <div>
                 <h2>${jogador.nomeCompleto}</h2>
                 <p class="details-meta">
-                    Apelido: <strong>${jogador.apelido || '—'}</strong> &bull;
-                    Posição: <strong>${jogador.posicao || '—'}</strong> &bull;
-                    Time: <span class="clickable" onclick="navigateTo('clube', ${jogador.clube?.id})"><strong>${jogador.clube?.nome || '—'}</strong></span>
+                    Apelido: <strong>${jogador.apelido || '�'}</strong> &bull;
+                    Posi��o: <strong>${jogador.posicao || '�'}</strong> &bull;
+                    Time: <span class="clickable" onclick="navigateTo('clube', ${jogador.clube?.id})"><strong>${jogador.clube?.nome || '�'}</strong></span>
                 </p>
-                ${currentUser ? `<button class="btn-favorite" onclick="adicionarJogadorFavorito(${jogador.id})">⭐ Adicionar aos Favoritos</button>` : ''}
+                ${currentUser ? `<button class="btn-favorite" onclick="adicionarJogadorFavorito(${jogador.id})">? Adicionar aos Favoritos</button>` : ''}
             </div>
         </div>
 
         <div class="details-grid">
             <div class="details-block">
-                <h4>Estatísticas Totais</h4>
+                <h4>Estat�sticas Totais</h4>
                 <ul>
                     <li>Gols: ${jogador.golsTotais ?? 0}</li>
-                    <li>Assistências: ${jogador.assistenciasTotais ?? 0}</li>
+                    <li>Assist�ncias: ${jogador.assistenciasTotais ?? 0}</li>
                     <li>Valor de Mercado: <span class="market-value">${formatCurrency(jogador.valorDeMercado)}</span></li>
                 </ul>
             </div>
             <div class="details-block">
-                <h4>Por Competição</h4>
-                <ul>${estatHtml || '<li>Sem estatísticas registradas</li>'}</ul>
+                <h4>Por Competi��o</h4>
+                <ul>${estatHtml || '<li>Sem estat�sticas registradas</li>'}</ul>
             </div>
         </div>
     `;
 }
 
 function renderStadiumDetails(estadio) {
-    // Encontrar dono do estádio (clube que tem este estádio)
+    // Encontrar dono do est�dio (clube que tem este est�dio)
     const dono = allClubes.find(c => c.estadio && c.estadio.id === estadio.id);
 
     detailContent.innerHTML = `
         <h2>${estadio.nome}</h2>
         <p class="details-meta">
             Cidade: <strong>${estadio.cidade}</strong> &bull;
-            País: <strong>${estadio.pais}</strong>
+            Pa�s: <strong>${estadio.pais}</strong>
         </p>
 
         <div class="details-grid">
@@ -689,9 +691,145 @@ function renderStadiumDetails(estadio) {
     `;
 }
 
+function calculateStandings(clubes, competicaoId) {
+    // Get all matches for this competition
+    const competicao = allCompetitions.find(c => c.id === competicaoId);
+    if (!competicao) return [];
+
+    // Filter matches that belong to this competition's clubs
+    const clubeIds = clubes.map(c => c.id);
+    const matches = allPartidas.filter(p =>
+        clubeIds.includes(p.mandante?.id) && clubeIds.includes(p.visitante?.id)
+    );
+
+    // Initialize standings
+    const standings = clubes.map(clube => ({
+        clube: clube,
+        jogos: 0,
+        vitorias: 0,
+        empates: 0,
+        derrotas: 0,
+        golsMarcados: 0,
+        golsSofridos: 0,
+        saldoGols: 0,
+        pontos: 0
+    }));
+
+    // Calculate standings from matches
+    matches.forEach(match => {
+        const homeTeam = standings.find(s => s.clube.id === match.mandante.id);
+        const awayTeam = standings.find(s => s.clube.id === match.visitante.id);
+
+        if (!homeTeam || !awayTeam) return;
+
+        const homeGoals = match.golsMandante || 0;
+        const awayGoals = match.golsVisitante || 0;
+
+        // Update games played
+        homeTeam.jogos++;
+        awayTeam.jogos++;
+
+        // Update goals
+        homeTeam.golsMarcados += homeGoals;
+        homeTeam.golsSofridos += awayGoals;
+        awayTeam.golsMarcados += awayGoals;
+        awayTeam.golsSofridos += homeGoals;
+
+        // Update results
+        if (homeGoals > awayGoals) {
+            // Home win
+            homeTeam.vitorias++;
+            homeTeam.pontos += 3;
+            awayTeam.derrotas++;
+        } else if (awayGoals > homeGoals) {
+            // Away win
+            awayTeam.vitorias++;
+            awayTeam.pontos += 3;
+            homeTeam.derrotas++;
+        } else {
+            // Draw
+            homeTeam.empates++;
+            awayTeam.empates++;
+            homeTeam.pontos += 1;
+            awayTeam.pontos += 1;
+        }
+    });
+
+    // Calculate goal difference
+    standings.forEach(s => {
+        s.saldoGols = s.golsMarcados - s.golsSofridos;
+    });
+
+    // Sort standings: points desc, wins desc, goal difference desc, goals scored desc
+    standings.sort((a, b) => {
+        if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+        if (b.vitorias !== a.vitorias) return b.vitorias - a.vitorias;
+        if (b.saldoGols !== a.saldoGols) return b.saldoGols - a.saldoGols;
+        return b.golsMarcados - a.golsMarcados;
+    });
+
+    return standings;
+}
+
 function renderCompetitionDetails(competicao) {
-    // Times da competição
+    // Times da competi��o
     const times = competicao.clubes || [];
+
+    let content = `<h2>${competicao.nome} (${competicao.temporada})</h2>`;
+
+    // Show standings table for pontos corridos competitions
+    if (competicao.tipoCompeticao === 'PONTOS_CORRIDOS') {
+        const standings = calculateStandings(times, competicao.id);
+
+        if (standings.length > 0 && standings.some(s => s.jogos > 0)) {
+            content += `
+                <div class="standings-container">
+                    <h3>?? Classifica��o</h3>
+                    <div class="standings-table-wrapper">
+                        <table class="standings-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Time</th>
+                                    <th>J</th>
+                                    <th>P</th>
+                                    <th>V</th>
+                                    <th>E</th>
+                                    <th>D</th>
+                                    <th>SG</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${standings.map((s, index) => `
+                                    <tr class="clickable" onclick="navigateTo('clube', ${s.clube.id})">
+                                        <td class="position">${index + 1}</td>
+                                        <td class="team-cell">
+                                            <img src="${getClubImgUrl(s.clube)}" class="team-logo-small" alt="${s.clube.nome}">
+                                            <span class="team-name">${s.clube.nome}</span>
+                                        </td>
+                                        <td>${s.jogos}</td>
+                                        <td class="points"><strong>${s.pontos}</strong></td>
+                                        <td>${s.vitorias}</td>
+                                        <td>${s.empates}</td>
+                                        <td>${s.derrotas}</td>
+                                        <td class="${s.saldoGols > 0 ? 'positive' : s.saldoGols < 0 ? 'negative' : ''}">${s.saldoGols > 0 ? '+' : ''}${s.saldoGols}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="legend">
+                        <span><strong>J</strong>: Jogos</span>
+                        <span><strong>P</strong>: Pontos</span>
+                        <span><strong>V</strong>: Vit�rias</span>
+                        <span><strong>E</strong>: Empates</span>
+                        <span><strong>D</strong>: Derrotas</span>
+                        <span><strong>SG</strong>: Saldo de Gols</span>
+                    </div>
+                </div>
+            `;
+        }
+    }
 
     let timesHtml = times.map(t => `
         <li class="clickable player-list-item" onclick="navigateTo('clube', ${t.id})">
@@ -700,9 +838,7 @@ function renderCompetitionDetails(competicao) {
         </li>
     `).join('');
 
-    detailContent.innerHTML = `
-        <h2>${competicao.nome} (${competicao.temporada})</h2>
-        
+    content += `
         <div class="details-grid">
             <div class="details-block">
                 <h4>Times Participantes</h4>
@@ -710,10 +846,12 @@ function renderCompetitionDetails(competicao) {
             </div>
         </div>
     `;
+
+    detailContent.innerHTML = content;
 }
 
 // =======================
-// RENDERIZAÇÃO HOME (Mantida e adaptada)
+// RENDERIZA��O HOME (Mantida e adaptada)
 // =======================
 
 function renderCompetitionButtons() {
@@ -721,7 +859,7 @@ function renderCompetitionButtons() {
     container.innerHTML = '';
 
     if (allCompetitions.length === 0) {
-        container.innerHTML = '<p style="color: #ff6b6b;">Nenhuma competição encontrada</p>';
+        container.innerHTML = '<p style="color: #ff6b6b;">Nenhuma competi��o encontrada</p>';
         return;
     }
 
@@ -731,9 +869,9 @@ function renderCompetitionButtons() {
         const btn = document.createElement('button');
         btn.className = 'pill';
         btn.dataset.competitionName = name;
-        let icon = '🏆';
-        if (name.toLowerCase().includes('brasileirão')) icon = '🇧🇷';
-        else if (name.toLowerCase().includes('libertadores')) icon = '🌎';
+        let icon = '??';
+        if (name.toLowerCase().includes('brasileir�o')) icon = '????';
+        else if (name.toLowerCase().includes('libertadores')) icon = '??';
 
         btn.textContent = `${icon} ${name}`;
         btn.addEventListener('click', () => selectCompetitionByName(name));
@@ -786,10 +924,10 @@ function selectSeason(season) {
 }
 
 function updateHint() {
-    if (!selectedCompetitionName) selectionHintEl.textContent = 'Selecione a competição para começar.';
+    if (!selectedCompetitionName) selectionHintEl.textContent = 'Selecione a competi��o para come�ar.';
     else if (!selectedSeason) selectionHintEl.textContent = 'Agora escolha a temporada.';
-    else if (!selectedCategory) selectionHintEl.textContent = 'Perfeito! Agora escolha se quer ver times, jogadores ou estádios.';
-    else selectionHintEl.textContent = `Explorando ${selectedCompetitionName} ${selectedSeason} — categoria: ${selectedCategory}.`;
+    else if (!selectedCategory) selectionHintEl.textContent = 'Perfeito! Agora escolha se quer ver times, jogadores ou est�dios.';
+    else selectionHintEl.textContent = `Explorando ${selectedCompetitionName} ${selectedSeason} � categoria: ${selectedCategory}.`;
 }
 
 function clearResults() {
@@ -807,8 +945,8 @@ function showError(message) {
 function render() {
     clearResults();
     if (!selectedCompetition || !selectedSeason || !selectedCategory) {
-        resultsTitleEl.textContent = 'Selecione competição, temporada e categoria.';
-        resultsSubtitleEl.textContent = 'Use as opções acima para filtrar o que você quer ver.';
+        resultsTitleEl.textContent = 'Selecione competi��o, temporada e categoria.';
+        resultsSubtitleEl.textContent = 'Use as op��es acima para filtrar o que voc� quer ver.';
         return;
     }
 
@@ -818,10 +956,10 @@ function render() {
     const catLabel = {
         clubes: 'Times participantes',
         jogadores: 'Todos os jogadores cadastrados',
-        estadios: 'Estádios'
+        estadios: 'Est�dios'
     }[selectedCategory];
 
-    resultsTitleEl.textContent = `${comp.nome} — ${selectedSeason}`;
+    resultsTitleEl.textContent = `${comp.nome} � ${selectedSeason}`;
     resultsSubtitleEl.textContent = catLabel;
 
     switch (selectedCategory) {
@@ -838,7 +976,7 @@ function renderClubes(comp) {
     }
     const clubesFiltered = comp.clubes || [];
     if (!clubesFiltered.length) {
-        cardsContainerEl.innerHTML = '<p>Não há times cadastrados.</p>';
+        cardsContainerEl.innerHTML = '<p>N�o h� times cadastrados.</p>';
         return;
     }
 
@@ -849,13 +987,13 @@ function renderClubes(comp) {
                     <img src="${getClubImgUrl(clube)}" class="card-image" alt="${clube.nome}">
                     <div>
                         <div class="card-title">${clube.nome}</div>
-                        <div class="results-subtitle">Cidade: ${clube.estadio?.cidade || '—'}</div>
+                        <div class="results-subtitle">Cidade: ${clube.estadio?.cidade || '�'}</div>
                     </div>
                 </div>
             </div>
             <div class="card-body">
-                <p><span>País:</span> ${clube.pais}</p>
-                <p><span>Estádio:</span> ${clube.estadio?.nome || '—'}</p>
+                <p><span>Pa�s:</span> ${clube.pais}</p>
+                <p><span>Est�dio:</span> ${clube.estadio?.nome || '�'}</p>
             </div>
         </article>
     `).join('');
@@ -871,7 +1009,7 @@ function renderJogadores(comp) {
     const jogadoresFiltered = allJogadores.filter(j => j.clube && clubeIds.includes(j.clube.id));
 
     if (!jogadoresFiltered.length) {
-        cardsContainerEl.innerHTML = '<p>Não há jogadores cadastrados.</p>';
+        cardsContainerEl.innerHTML = '<p>N�o h� jogadores cadastrados.</p>';
         return;
     }
 
@@ -882,12 +1020,12 @@ function renderJogadores(comp) {
                     ${getPlayerImgTag(jogador)}
                     <div>
                         <div class="card-title">${jogador.apelido || jogador.nomeCompleto}</div>
-                        <span class="badge">${jogador.posicao || '—'}</span>
+                        <span class="badge">${jogador.posicao || '�'}</span>
                     </div>
                 </div>
             </div>
             <div class="card-body">
-                <p><span>Time:</span> ${jogador.clube?.nome || '—'}</p>
+                <p><span>Time:</span> ${jogador.clube?.nome || '�'}</p>
                 <p><span>Gols:</span> ${jogador.golsTotais ?? 0}</p>
                 <p><span>Valor:</span> ${formatCurrency(jogador.valorDeMercado)}</p>
             </div>
@@ -897,7 +1035,7 @@ function renderJogadores(comp) {
 }
 
 // =======================
-// NAVEGAÇÃO E SCROLL SPY
+// NAVEGA��O E SCROLL SPY
 // =======================
 
 function setupNavigation() {
@@ -916,7 +1054,7 @@ function setupNavigation() {
                 e.preventDefault();
                 const targetId = href.substring(1);
 
-                // Se for link para Início (href="#"), rolar para o topo
+                // Se for link para In�cio (href="#"), rolar para o topo
                 if (targetId === '') {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     return;
@@ -939,10 +1077,10 @@ function setupNavigation() {
     // Scroll Spy
     window.addEventListener('scroll', () => {
         let current = '';
-        const scrollPosition = window.scrollY + 100; // Offset para detecção antecipada
+        const scrollPosition = window.scrollY + 100; // Offset para detec��o antecipada
         const bottomOfPage = window.innerHeight + window.scrollY >= document.body.offsetHeight - 10;
 
-        // Mapeamento manual das seções para verificar
+        // Mapeamento manual das se��es para verificar
         const homeSection = document.getElementById('homeView'); // Usando homeView como topo
         const exploreSection = document.getElementById('explorar');
         const aboutSection = document.getElementById('sobre');
@@ -959,12 +1097,12 @@ function setupNavigation() {
             current = 'sobre';
         }
 
-        // Se chegou no fim da página, força 'sobre'
+        // Se chegou no fim da p�gina, for�a 'sobre'
         if (bottomOfPage) {
             current = 'sobre';
         }
 
-        // Se estivermos no topo absoluto, força home
+        // Se estivermos no topo absoluto, for�a home
         if (window.scrollY < 50) {
             current = 'home';
         }
@@ -988,11 +1126,11 @@ function setupNavigation() {
 
 function renderEstadios() {
     if (isLoadingData) {
-        cardsContainerEl.innerHTML = '<div class="loading">Carregando estádios...</div>';
+        cardsContainerEl.innerHTML = '<div class="loading">Carregando est�dios...</div>';
         return;
     }
     if (!allEstadios.length) {
-        cardsContainerEl.innerHTML = '<p>Não há estádios cadastrados.</p>';
+        cardsContainerEl.innerHTML = '<p>N�o h� est�dios cadastrados.</p>';
         return;
     }
 
@@ -1000,11 +1138,11 @@ function renderEstadios() {
         <article class="card clickable" onclick="navigateTo('estadio', ${estadio.id})">
             <div class="card-header">
                 <div class="card-title">${estadio.nome}</div>
-                <span class="badge">🏟️ Estádio</span>
+                <span class="badge">??? Est�dio</span>
             </div>
             <div class="card-body">
                 <p><span>Cidade:</span> ${estadio.cidade}</p>
-                <p><span>País:</span> ${estadio.pais}</p>
+                <p><span>Pa�s:</span> ${estadio.pais}</p>
             </div>
         </article>
     `).join('');
@@ -1012,7 +1150,7 @@ function renderEstadios() {
 }
 
 // =======================
-// PERFIL DO USUÁRIO
+// PERFIL DO USU�RIO
 // =======================
 
 const profileView = document.getElementById('profileView');
@@ -1022,7 +1160,7 @@ const profileEmail = document.getElementById('profileEmail');
 const profilePassword = document.getElementById('profilePassword');
 const btnTogglePassword = document.getElementById('btnTogglePassword');
 
-// Navegação para o Perfil
+// Navega��o para o Perfil
 userName.addEventListener('click', () => {
     if (currentUser) {
         showProfileView();
@@ -1049,7 +1187,7 @@ async function renderUserProfile() {
     profileName.textContent = currentUser.nome;
     profileEmail.textContent = currentUser.email;
 
-    // Senha (recuperada do cache local da sessão)
+    // Senha (recuperada do cache local da sess�o)
     profilePassword.value = currentUser.password || '';
 
     // Carregar favoritos
@@ -1065,22 +1203,22 @@ async function renderUserProfile() {
 btnTogglePassword.addEventListener('click', () => {
     const type = profilePassword.getAttribute('type') === 'password' ? 'text' : 'password';
     profilePassword.setAttribute('type', type);
-    btnTogglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+    btnTogglePassword.textContent = type === 'password' ? '???' : '??';
 });
 
 function renderProfileFavorites(perfil) {
-    // Time do Coração
+    // Time do Cora��o
     const profileTeamContent = document.getElementById('profileTeamContent');
     if (perfil.clubeFavorito) {
         profileTeamContent.innerHTML = `
             <div class="favorite-team-card clickable" onclick="navigateTo('clube', ${perfil.clubeFavorito.id})">
                 <h4>${perfil.clubeFavorito.nome}</h4>
-                <p>Cidade: ${perfil.clubeFavorito.cidade || '—'}</p>
-                <p>Estádio: ${perfil.clubeFavorito.estadio?.nome || '—'}</p>
+                <p>Cidade: ${perfil.clubeFavorito.cidade || '�'}</p>
+                <p>Est�dio: ${perfil.clubeFavorito.estadio?.nome || '�'}</p>
             </div>
         `;
     } else {
-        profileTeamContent.innerHTML = '<p class="no-favorite">Você ainda não selecionou seu time do coração.</p>';
+        profileTeamContent.innerHTML = '<p class="no-favorite">Voc� ainda n�o selecionou seu time do cora��o.</p>';
     }
 
     // Jogadores Favoritos
@@ -1089,19 +1227,19 @@ function renderProfileFavorites(perfil) {
         profilePlayersContent.innerHTML = perfil.jogadoresObservados.map(jogador => `
             <div class="favorite-player-card clickable" onclick="navigateTo('jogador', ${jogador.id})">
                 <h4>${jogador.apelido || jogador.nomeCompleto}</h4>
-                <p>Time: ${jogador.clube?.nome || '—'}</p>
-                <p>Posição: ${jogador.posicao || '—'}</p>
-                <p>Gols: ${jogador.golsTotais ?? 0} | Assistências: ${jogador.assistenciasTotais ?? 0}</p>
+                <p>Time: ${jogador.clube?.nome || '�'}</p>
+                <p>Posi��o: ${jogador.posicao || '�'}</p>
+                <p>Gols: ${jogador.golsTotais ?? 0} | Assist�ncias: ${jogador.assistenciasTotais ?? 0}</p>
                 <button class="btn-remove-favorite" onclick="event.stopPropagation(); removerJogadorFavorito(${jogador.id})">Remover</button>
             </div>
         `).join('');
     } else {
-        profilePlayersContent.innerHTML = '<p class="no-favorite">Você ainda não adicionou jogadores favoritos.</p>';
+        profilePlayersContent.innerHTML = '<p class="no-favorite">Voc� ainda n�o adicionou jogadores favoritos.</p>';
     }
 }
 
 // =======================
-// INICIALIZAÇÃO
+// INICIALIZA��O
 // =======================
 
 // Event Listeners Globais
@@ -1114,7 +1252,7 @@ btnBack.addEventListener('click', showHome);
 
 document.querySelectorAll('.pill').forEach(pill => {
     pill.addEventListener('click', function () {
-        // Lógica de seleção de categoria
+        // L�gica de sele��o de categoria
         if (this.parentElement.id === 'categoryRow') {
             document.querySelectorAll('#categoryRow .pill').forEach(p => p.classList.remove('active'));
             this.classList.add('active');
@@ -1133,7 +1271,614 @@ document.querySelectorAll('.pill').forEach(pill => {
         await loadCompeticoes();
         await loadAllData();
     } catch (error) {
-        console.error('Erro na inicialização:', error);
-        showError('Falha ao carregar dados iniciais. Verifique se a API está rodando.');
+        console.error('Erro na inicializa��o:', error);
+        showError('Falha ao carregar dados iniciais. Verifique se a API est� rodando.');
     }
 })();
+// =======================
+// DASHBOARD E GR�FICOS
+// =======================
+
+let charts = {}; // Armazena inst�ncias dos gr�ficos
+
+function renderDashboard() {
+    const dashboardSection = document.getElementById('dashboardSection');
+
+    // S� mostra o dashboard se tiver competi��o e temporada selecionadas
+    if (!selectedCompetition || !selectedSeason) {
+        dashboardSection.classList.add('hidden');
+        return;
+    }
+
+    dashboardSection.classList.remove('hidden');
+
+    // Filtrar jogadores com estat�sticas na competi��o/temporada selecionada
+    const playersWithStats = allJogadores.filter(j =>
+        j.estatisticasPorCompeticao &&
+        j.estatisticasPorCompeticao.some(e =>
+            e.nomeCompeticao === selectedCompetitionName &&
+            e.temporada === selectedSeason
+        )
+    ).map(j => {
+        const stat = j.estatisticasPorCompeticao.find(e =>
+            e.nomeCompeticao === selectedCompetitionName &&
+            e.temporada === selectedSeason
+        );
+        return {
+            ...j,
+            golsNaCompeticao: stat ? stat.gols : 0,
+            assistenciasNaCompeticao: stat ? stat.assistencias : 0
+        };
+    });
+
+    renderTopScorersChart(playersWithStats);
+    renderTopAssistersChart(playersWithStats);
+    renderMarketValueChart(playersWithStats);
+}
+
+function renderTopScorersChart(players) {
+    const ctx = document.getElementById('topScorersChart').getContext('2d');
+
+    // Top 10 Artilheiros
+    const topScorers = players
+        .sort((a, b) => b.golsNaCompeticao - a.golsNaCompeticao)
+        .slice(0, 10)
+        .filter(p => p.golsNaCompeticao > 0);
+
+    const labels = topScorers.map(p => p.apelido || p.nomeCompleto);
+    const data = topScorers.map(p => p.golsNaCompeticao);
+
+    if (charts.topScorers) charts.topScorers.destroy();
+
+    charts.topScorers = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gols',
+                data: data,
+                backgroundColor: 'rgba(0, 255, 170, 0.6)',
+                borderColor: '#00ffaa',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { beginAtZero: true, grid: { color: '#333' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderTopAssistersChart(players) {
+    const ctx = document.getElementById('topAssistersChart').getContext('2d');
+
+    // Top 10 Assistentes
+    const topAssisters = players
+        .sort((a, b) => b.assistenciasNaCompeticao - a.assistenciasNaCompeticao)
+        .slice(0, 10)
+        .filter(p => p.assistenciasNaCompeticao > 0);
+
+    const labels = topAssisters.map(p => p.apelido || p.nomeCompleto);
+    const data = topAssisters.map(p => p.assistenciasNaCompeticao);
+
+    if (charts.topAssisters) charts.topAssisters.destroy();
+
+    charts.topAssisters = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Assist�ncias',
+                data: data,
+                backgroundColor: 'rgba(74, 158, 255, 0.6)',
+                borderColor: '#4a9eff',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { beginAtZero: true, grid: { color: '#333' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderMarketValueChart(players) {
+    const ctx = document.getElementById('marketValueChart').getContext('2d');
+
+    // Top 15 Jogadores Mais Valiosos (independente de stats na competi��o, mas filtrados por estarem nela?)
+    // Se quisermos mostrar os mais valiosos DA COMPETI��O, usamos a lista filtrada.
+    const topValuable = players
+        .sort((a, b) => (b.valorDeMercado || 0) - (a.valorDeMercado || 0))
+        .slice(0, 15)
+        .filter(p => p.valorDeMercado > 0);
+
+    const labels = topValuable.map(p => p.apelido || p.nomeCompleto);
+    const data = topValuable.map(p => p.valorDeMercado);
+
+    if (charts.marketValue) charts.marketValue.destroy();
+
+    charts.marketValue = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Valor de Mercado (R$)',
+                data: data,
+                backgroundColor: 'rgba(168, 85, 247, 0.6)',
+                borderColor: '#a855f7',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return formatCurrency(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#333' },
+                    ticks: {
+                        callback: function (value) {
+                            return 'R$ ' + (value / 1000000).toFixed(0) + 'M';
+                        }
+                    }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// =======================
+// RENDERIZA��O PRINCIPAL
+// =======================
+
+function render() {
+    if (!selectedCompetition || !selectedSeason) return;
+
+    // Renderiza o Dashboard
+    renderDashboard();
+
+    if (!selectedCategory) return;
+
+    cardsContainerEl.innerHTML = '';
+    resultsTitleEl.textContent = `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} - ${selectedCompetitionName} ${selectedSeason}`;
+    resultsSubtitleEl.textContent = `Exibindo resultados para ${selectedCategory}`;
+
+    if (isLoadingData) {
+        showLoading();
+        return;
+    }
+
+    switch (selectedCategory) {
+        case 'clubes':
+            renderClubes();
+            break;
+        case 'jogadores':
+            renderJogadores();
+            break;
+        case 'estadios':
+            renderEstadios();
+            break;
+    }
+}
+
+function renderClubes() {
+    // Filtrar clubes que participam desta competi��o/temporada
+    // A API de competi��es retorna a lista de clubes nela.
+    const comp = allCompetitions.find(c => c.id === selectedCompetition);
+    if (!comp || !comp.clubes) {
+        cardsContainerEl.innerHTML = '<p>Nenhum clube encontrado nesta competi��o.</p>';
+        return;
+    }
+
+    comp.clubes.forEach(clube => {
+        const card = document.createElement('div');
+        card.className = 'card clickable';
+        card.onclick = () => navigateTo('clube', clube.id);
+
+        const imgUrl = getClubImgUrl(clube);
+
+        card.innerHTML = `
+            <div class="card-header">
+                <span class="badge">S�rie A</span>
+                <span class="badge">${clube.sigla || '---'}</span>
+            </div>
+            <div style="text-align: center; margin: 1rem 0;">
+                <img src="${imgUrl}" style="width: 80px; height: 80px; object-fit: contain;">
+            </div>
+            <div class="card-title" style="text-align: center; margin-bottom: 1rem;">${clube.nome}</div>
+            <div class="card-body">
+                <p><span>Cidade:</span> ${clube.cidade || '�'}</p>
+                <p><span>Est�dio:</span> ${clube.estadio ? clube.estadio.nome : '�'}</p>
+            </div>
+        `;
+        cardsContainerEl.appendChild(card);
+    });
+}
+
+function renderJogadores() {
+    // Filtrar jogadores que t�m estat�sticas nesta competi��o e temporada
+    const jogadoresFiltrados = allJogadores.filter(j =>
+        j.estatisticasPorCompeticao &&
+        j.estatisticasPorCompeticao.some(e =>
+            e.nomeCompeticao === selectedCompetitionName &&
+            e.temporada === selectedSeason
+        )
+    );
+
+    if (jogadoresFiltrados.length === 0) {
+        cardsContainerEl.innerHTML = '<p>Nenhum jogador encontrado com estat�sticas nesta competi��o.</p>';
+        return;
+    }
+
+    // Ordenar por gols (padr�o)
+    jogadoresFiltrados.sort((a, b) => {
+        const statA = a.estatisticasPorCompeticao.find(e => e.nomeCompeticao === selectedCompetitionName && e.temporada === selectedSeason);
+        const statB = b.estatisticasPorCompeticao.find(e => e.nomeCompeticao === selectedCompetitionName && e.temporada === selectedSeason);
+        return (statB ? statB.gols : 0) - (statA ? statA.gols : 0);
+    });
+
+    jogadoresFiltrados.forEach(jogador => {
+        const stat = jogador.estatisticasPorCompeticao.find(e => e.nomeCompeticao === selectedCompetitionName && e.temporada === selectedSeason);
+        const gols = stat ? stat.gols : 0;
+        const assistencias = stat ? stat.assistencias : 0;
+        const imgTag = getPlayerImgTag(jogador);
+
+        const card = document.createElement('div');
+        card.className = 'card clickable';
+        card.onclick = () => navigateTo('jogador', jogador.id);
+
+        card.innerHTML = `
+            <div class="card-header">
+                <span class="badge">${jogador.posicao || 'Atleta'}</span>
+                ${gols > 0 ? `<span class="badge">? ${gols}</span>` : ''}
+            </div>
+            <div style="text-align: center; margin: 1rem 0;">
+                ${imgTag}
+            </div>
+            <div class="card-title" style="text-align: center; margin-bottom: 0.5rem;">${jogador.apelido || jogador.nomeCompleto}</div>
+            <div class="card-body">
+                <p><span>Time:</span> ${jogador.clube ? jogador.clube.nome : '�'}</p>
+                <p><span>Gols:</span> ${gols}</p>
+                <p><span>Assist�ncias:</span> ${assistencias}</p>
+            </div>
+        `;
+        cardsContainerEl.appendChild(card);
+    });
+}
+
+function renderEstadios() {
+    // Mostrar est�dios dos times desta competi��o
+    const comp = allCompetitions.find(c => c.id === selectedCompetition);
+    if (!comp || !comp.clubes) {
+        cardsContainerEl.innerHTML = '<p>Nenhum est�dio encontrado.</p>';
+        return;
+    }
+
+    const estadiosIds = new Set();
+    const estadios = [];
+
+    comp.clubes.forEach(c => {
+        if (c.estadio && !estadiosIds.has(c.estadio.id)) {
+            estadiosIds.add(c.estadio.id);
+            estadios.push(c.estadio);
+        }
+    });
+
+    if (estadios.length === 0) {
+        cardsContainerEl.innerHTML = '<p>Nenhum est�dio vinculado aos times desta competi��o.</p>';
+        return;
+    }
+
+    estadios.forEach(estadio => {
+        const card = document.createElement('div');
+        card.className = 'card clickable';
+        card.onclick = () => navigateTo('estadio', estadio.id);
+
+        card.innerHTML = `
+            <div class="card-header">
+                <span class="badge">Est�dio</span>
+            </div>
+            <div class="card-title" style="margin-bottom: 1rem;">${estadio.nome}</div>
+            <div class="card-body">
+                <p><span>Cidade:</span> ${estadio.cidade}</p>
+                <p><span>Pa�s:</span> ${estadio.pais}</p>
+            </div>
+        `;
+        cardsContainerEl.appendChild(card);
+    });
+}
+
+// =======================
+// INICIALIZA��O
+// =======================
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCompeticoes();
+    loadAllData();
+    updateUserUI(); // Checa se tem usu�rio logado
+
+    // Setup dos bot�es de categoria
+    document.querySelectorAll('#categoryRow .pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#categoryRow .pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedCategory = btn.dataset.category;
+            updateHint();
+            render();
+        });
+    });
+
+    // Bot�o Voltar
+    btnBack.addEventListener('click', showHome);
+
+    // Bot�o Home
+    btnHome.addEventListener('click', showHome);
+
+    // Bot�o Fechar Perfil
+    document.getElementById('btnCloseProfile').addEventListener('click', () => {
+        document.getElementById('profileView').classList.add('hidden');
+        document.getElementById('homeView').classList.remove('hidden');
+    });
+
+    // Bot�o Abrir Perfil (clique no nome)
+    userName.addEventListener('click', () => {
+        document.getElementById('homeView').classList.add('hidden');
+        document.getElementById('detailView').classList.add('hidden');
+        document.getElementById('profileView').classList.remove('hidden');
+
+        // Preencher dados
+        if (currentUser) {
+            document.getElementById('profileName').textContent = currentUser.nome;
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            document.getElementById('profilePassword').value = currentUser.password;
+        }
+    });
+
+    // Toggle Password
+    const btnTogglePassword = document.getElementById('btnTogglePassword');
+    const profilePassword = document.getElementById('profilePassword');
+    btnTogglePassword.addEventListener('click', () => {
+        if (profilePassword.type === 'password') {
+            profilePassword.type = 'text';
+            btnTogglePassword.textContent = '??';
+        } else {
+            profilePassword.type = 'password';
+            btnTogglePassword.textContent = '???';
+        }
+    });
+});
+
+// =======================
+// PLAYER COMPARISON
+// =======================
+
+const playerComparisonView = document.getElementById('playerComparisonView');
+const btnOpenComparison = document.getElementById('btnOpenComparison');
+const btnCloseComparison = document.getElementById('btnCloseComparison');
+const player1Select = document.getElementById('player1Select');
+const player2Select = document.getElementById('player2Select');
+const btnCompare = document.getElementById('btnCompare');
+const comparisonResult = document.getElementById('comparisonResult');
+
+// Abrir comparador
+if (btnOpenComparison) {
+    btnOpenComparison.addEventListener('click', () => {
+        showComparisonView();
+    });
+}
+
+// Fechar comparador
+if (btnCloseComparison) {
+    btnCloseComparison.addEventListener('click', () => {
+        playerComparisonView.classList.add('hidden');
+        homeView.classList.remove('hidden');
+    });
+}
+
+function showComparisonView() {
+    homeView.classList.add('hidden');
+    detailView.classList.add('hidden');
+    profileView.classList.add('hidden');
+    playerComparisonView.classList.remove('hidden');
+
+    loadPlayersForComparison();
+}
+
+function loadPlayersForComparison() {
+    // Limpar seletores
+    player1Select.innerHTML = '<option value="">Selecione um jogador</option>';
+    player2Select.innerHTML = '<option value="">Selecione um jogador</option>';
+
+    // Filtrar jogadores com estat�sticas
+    let jogadoresDisponiveis = [];
+
+    if (selectedCompetitionName && selectedSeason) {
+        // Filtrar jogadores da competi��o/temporada selecionada
+        jogadoresDisponiveis = allJogadores.filter(j =>
+            j.estatisticasPorCompeticao &&
+            j.estatisticasPorCompeticao.some(e =>
+                e.nomeCompeticao === selectedCompetitionName &&
+                e.temporada === selectedSeason
+            )
+        );
+    } else {
+        // Se n�o tem filtro, mostra todos os jogadores com estat�sticas
+        jogadoresDisponiveis = allJogadores.filter(j =>
+            j.estatisticasPorCompeticao && j.estatisticasPorCompeticao.length > 0
+        );
+    }
+
+    // Ordenar por nome
+    jogadoresDisponiveis.sort((a, b) => {
+        const nomeA = a.apelido || a.nomeCompleto || '';
+        const nomeB = b.apelido || b.nomeCompleto || '';
+        return nomeA.localeCompare(nomeB);
+    });
+
+    // Popula os seletores
+    jogadoresDisponiveis.forEach(jogador => {
+        const option1 = document.createElement('option');
+        const option2 = document.createElement('option');
+        const nome = jogador.apelido || jogador.nomeCompleto;
+        const clube = jogador.clube ? ` (${jogador.clube.nome})` : '';
+
+        option1.value = jogador.id;
+        option1.textContent = nome + clube;
+        option2.value = jogador.id;
+        option2.textContent = nome + clube;
+
+        player1Select.appendChild(option1);
+        player2Select.appendChild(option2);
+    });
+}
+
+// Habilitar bot�o de comparar quando ambos jogadores estiverem selecionados
+if (player1Select && player2Select && btnCompare) {
+    player1Select.addEventListener('change', checkCompareButton);
+    player2Select.addEventListener('change', checkCompareButton);
+
+    btnCompare.addEventListener('click', () => {
+        const id1 = parseInt(player1Select.value);
+        const id2 = parseInt(player2Select.value);
+
+        if (id1 && id2) {
+            comparePlayerStats(id1, id2);
+        }
+    });
+}
+
+function checkCompareButton() {
+    if (player1Select.value && player2Select.value) {
+        btnCompare.disabled = false;
+    } else {
+        btnCompare.disabled = true;
+    }
+}
+
+function comparePlayerStats(jogadorId1, jogadorId2) {
+    const jogador1 = allJogadores.find(j => j.id === jogadorId1);
+    const jogador2 = allJogadores.find(j => j.id === jogadorId2);
+
+    if (!jogador1 || !jogador2) {
+        comparisonResult.innerHTML = '<p class="error-message">Jogadores n�o encontrados.</p>';
+        comparisonResult.classList.remove('hidden');
+        return;
+    }
+
+    renderComparison(jogador1, jogador2);
+}
+
+function renderComparison(jogador1, jogador2) {
+    // Buscar estat�sticas da competi��o/temporada selecionada, ou usar totais
+    let stats1 = {
+        gols: jogador1.golsTotais || 0,
+        assistencias: jogador1.assistenciasTotais || 0,
+        partidas: jogador1.estatisticasPorPartida ? jogador1.estatisticasPorPartida.length : 0
+    };
+
+    let stats2 = {
+        gols: jogador2.golsTotais || 0,
+        assistencias: jogador2.assistenciasTotais || 0,
+        partidas: jogador2.estatisticasPorPartida ? jogador2.estatisticasPorPartida.length : 0
+    };
+
+    // Se houver competi��o/temporada selecionada, usa apenas essas stats
+    if (selectedCompetitionName && selectedSeason) {
+        const stat1 = jogador1.estatisticasPorCompeticao?.find(e =>
+            e.nomeCompeticao === selectedCompetitionName && e.temporada === selectedSeason
+        );
+        const stat2 = jogador2.estatisticasPorCompeticao?.find(e =>
+            e.nomeCompeticao === selectedCompetitionName && e.temporada === selectedSeason
+        );
+
+        if (stat1) {
+            const partidasFiltradas = jogador1.estatisticasPorPartida ? 
+                jogador1.estatisticasPorPartida.filter(p => 
+                    p.nomeCompeticao === selectedCompetitionName && 
+                    p.temporada === selectedSeason
+                ) : [];
+            stats1 = {
+                gols: stat1.gols || 0,
+                assistencias: stat1.assistencias || 0,
+                partidas: partidasFiltradas.length
+            };
+        }
+
+        if (stat2) {
+            const partidasFiltradas = jogador2.estatisticasPorPartida ? 
+                jogador2.estatisticasPorPartida.filter(p => 
+                    p.nomeCompeticao === selectedCompetitionName && 
+                    p.temporada === selectedSeason
+                ) : [];
+            stats2 = {
+                gols: stat2.gols || 0,
+                assistencias: stat2.assistencias || 0,
+                partidas: partidasFiltradas.length
+            };
+        }
+    }
+
+    const nome1 = jogador1.apelido || jogador1.nomeCompleto;
+    const nome2 = jogador2.apelido || jogador2.nomeCompleto;
+
+    const html = `
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th class="player-name-header">${nome1}</th>
+                    <th class="stat-label">Estat�stica</th>
+                    <th class="player-name-header">${nome2}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="${stats1.gols > stats2.gols ? 'stat-winner' : ''}">${stats1.gols}</td>
+                    <td class="stat-label">Gols</td>
+                    <td class="${stats2.gols > stats1.gols ? 'stat-winner' : ''}">${stats2.gols}</td>
+                </tr>
+                <tr>
+                    <td class="${stats1.assistencias > stats2.assistencias ? 'stat-winner' : ''}">${stats1.assistencias}</td>
+                    <td class="stat-label">Assist�ncias</td>
+                    <td class="${stats2.assistencias > stats1.assistencias ? 'stat-winner' : ''}">${stats2.assistencias}</td>
+                </tr>
+                <tr>
+                    <td class="${stats1.partidas > stats2.partidas ? 'stat-winner' : ''}">${stats1.partidas}</td>
+                    <td class="stat-label">Jogos Disputados</td>
+                    <td class="${stats2.partidas > stats1.partidas ? 'stat-winner' : ''}">${stats2.partidas}</td>
+                </tr>
+                <tr>
+                    <td class="${(jogador1.valorDeMercado || 0) > (jogador2.valorDeMercado || 0) ? 'stat-winner' : ''}">${formatCurrency(jogador1.valorDeMercado)}</td>
+                    <td class="stat-label">Valor de Mercado</td>
+                    <td class="${(jogador2.valorDeMercado || 0) > (jogador1.valorDeMercado || 0) ? 'stat-winner' : ''}">${formatCurrency(jogador2.valorDeMercado)}</td>
+                </tr>
+            </tbody>
+        </table>
+    `;
+
+    comparisonResult.innerHTML = html;
+    comparisonResult.classList.remove('hidden');
+}

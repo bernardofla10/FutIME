@@ -25,7 +25,7 @@ rate_limiter = RateLimiter(requests_per_minute=10)
 API_KEY = "4fbc99d457510865b15ea8cb0f90ba0c"
 API_BASE_URL = "https://v3.football.api-sports.io"
 LEAGUE_ID = 71  # Brasileirão Série A
-SEASONS = [2025]
+SEASONS = [2024]
 DB_HOST = "aws-1-sa-east-1.pooler.supabase.com"
 DB_PORT = "5432"
 DB_NAME = "futime_dbDEPLOY"
@@ -163,8 +163,9 @@ def get_or_create_jogador(player_data, team_id):
         
     if result:
         player_id = result[0]
-        # Update club
-        cur.execute("UPDATE jogadores SET clube_id = %s WHERE id = %s", (team_id, player_id))
+        # DON'T update clube_id - players can play for different clubs in different seasons
+        # Club affiliation is tracked through jogador_estatisticas_competicao per season
+        print(f"Player {name} already exists (ID: {player_id}), will update statistics")
         return player_id
     
     print(f"Creating player: {name}")
@@ -299,48 +300,42 @@ def process_season(season):
         link_club_to_competition(competicao_id, club_id)
         
         # 2. Get Players for this team
-        # Optimization: Check if we already have players for this club
-        cur.execute("SELECT COUNT(*) FROM jogadores WHERE clube_id = %s", (club_id,))
-        player_count = cur.fetchone()[0]
+        # ALWAYS fetch players to update their statistics for this season
+        print(f"Fetching players for {team['name']}...")
+        # Note: This can be heavy (20 teams * 1 call).
+        # players_resp = make_request("players", {"league": LEAGUE_ID, "season": season, "team": team["id"]})
+        # Pagination handling? API returns paging.
+        # Simple loop for pages
+        current_page = 1
+        total_pages = 1
         
-        if player_count > 15: # Arbitrary threshold to assume populated
-             print(f"Skipping players for {team['name']} (already has {player_count} players).")
-        else:
-            print(f"Fetching players for {team['name']}...")
-            # Note: This can be heavy (20 teams * 1 call).
-            # players_resp = make_request("players", {"league": LEAGUE_ID, "season": season, "team": team["id"]})
-            # Pagination handling? API returns paging.
-            # Simple loop for pages
-            current_page = 1
-            total_pages = 1
+        while current_page <= total_pages:
+            # We need to call raw request to get paging info if we use make_request wrapper we lose it.
+            # Let's do it inline here for players.
+            rate_limiter.wait()
+            headers = {"x-rapidapi-host": "v3.football.api-sports.io", "x-rapidapi-key": API_KEY}
+            p_url = f"{API_BASE_URL}/players?league={LEAGUE_ID}&season={season}&team={team['id']}&page={current_page}"
+            p_res = requests.get(p_url, headers=headers)
+            if p_res.status_code != 200:
+                break
+            p_json = p_res.json()
+            p_list = p_json.get("response", [])
+            total_pages = p_json.get("paging", {}).get("total", 1)
             
-            while current_page <= total_pages:
-                # We need to call raw request to get paging info if we use make_request wrapper we lose it.
-                # Let's do it inline here for players.
-                rate_limiter.wait()
-                headers = {"x-rapidapi-host": "v3.football.api-sports.io", "x-rapidapi-key": API_KEY}
-                p_url = f"{API_BASE_URL}/players?league={LEAGUE_ID}&season={season}&team={team['id']}&page={current_page}"
-                p_res = requests.get(p_url, headers=headers)
-                if p_res.status_code != 200:
-                    break
-                p_json = p_res.json()
-                p_list = p_json.get("response", [])
-                total_pages = p_json.get("paging", {}).get("total", 1)
+            for p_item in p_list:
+                p_data = p_item["player"]
+                stats_list = p_item["statistics"]
                 
-                for p_item in p_list:
-                    p_data = p_item["player"]
-                    stats_list = p_item["statistics"]
-                    
-                    # Create/Update Player
-                    player_id = get_or_create_jogador(p_item, club_id)
-                    
-                    # Create/Update Stats
-                    # Find stats for this league
-                    for stat in stats_list:
-                        if stat["league"]["id"] == LEAGUE_ID:
-                            update_player_stats(player_id, competicao_id, stat)
-            
-                current_page += 1
+                # Create/Update Player
+                player_id = get_or_create_jogador(p_item, club_id)
+                
+                # Create/Update Stats
+                # Find stats for this league
+                for stat in stats_list:
+                    if stat["league"]["id"] == LEAGUE_ID:
+                        update_player_stats(player_id, competicao_id, stat)
+        
+            current_page += 1
             # time.sleep(0.2) # Rate limit safety
         
         conn.commit() # Commit after each team's players are processed
