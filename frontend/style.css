@@ -1,4 +1,4 @@
-* {
+﻿* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -455,6 +455,24 @@ nav {
     font-size: 1rem;
     color: #c6d0e3;
     line-height: 1.6;
+}
+
+
+/* User Favorites Section */
+.user-favorites {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 2rem 3rem;
+    background: rgba(12, 26, 42, 0.96);
+    border-radius: 0 0 18px 18px;
+    border: 1px solid rgba(0, 255, 170, 0.25);
+    border-top: none;
+}
+
+.user-favorites h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #00ffaa;
 }
 
 
