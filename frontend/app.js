@@ -48,7 +48,8 @@ function normalizeFileName(name) {
 }
 
 function getClubImgUrl(club) {
-    if (!club || !club.nome) return 'assets/placeholder_club.png';
+    if (!club) return 'assets/placeholder_club.png';
+    if (club.imageUrl) return club.imageUrl;
     const normalized = normalizeFileName(club.nome);
     return `assets/clubs/${normalized}.png`;
 }
@@ -317,12 +318,13 @@ async function loadUserFavorites() {
         // Atualizar time do coração
         const favoriteTeamContent = document.getElementById('favoriteTeamContent');
         if (perfil.clubeFavorito) {
+            const normalizedClub = normalizeFileName(perfil.clubeFavorito.nome);
             favoriteTeamContent.innerHTML = `
                 <div class="favorite-team-card clickable" onclick="navigateTo('clube', ${perfil.clubeFavorito.id})">
-                    <img src="${getClubImgUrl(perfil.clubeFavorito)}" class="favorite-img" alt="${perfil.clubeFavorito.nome}">
+                    <img src="${getClubImgUrl(perfil.clubeFavorito)}" class="favorite-img" alt="${perfil.clubeFavorito.nome}" onerror="this.onerror=null; this.src='assets/clubs/${normalizedClub}.png';">
                     <div>
                         <h4>❤️ ${perfil.clubeFavorito.nome}</h4>
-                        <p>Cidade: ${perfil.clubeFavorito.cidade || '-'}</p>
+                        <p>Cidade: ${perfil.clubeFavorito.estadio?.cidade || perfil.clubeFavorito.cidade || '-'}</p>
                     </div>
                 </div>
             `;
@@ -511,9 +513,10 @@ function renderSearchResults(results) {
         if (res.img || res.imageUrl) {
             const src = res.imageUrl || res.img;
             if (res.isPlayer) {
-                imgHtml = `<img src="${src}" class="search-item-img" onerror="this.onerror=null; this.src='${src.replace('.jpg', '.png')}';">`;
+                imgHtml = `<img src="${src}" class="search-item-img" onerror="this.onerror=null; this.src='assets/players/${normalizeFileName(res.name)}.png';">`;
             } else {
-                imgHtml = `<img src="${src}" class="search-item-img">`;
+                // Para clubes e outros
+                imgHtml = `<img src="${src}" class="search-item-img" onerror="this.onerror=null; this.src='assets/clubs/${normalizeFileName(res.name)}.png';">`;
             }
         }
 
@@ -593,11 +596,11 @@ function renderTeamDetails(clube) {
 
     detailContent.innerHTML = `
         <div class="detail-header-content">
-            <img src="${getClubImgUrl(clube)}" class="detail-logo" alt="${clube.nome}">
+            <img src="${getClubImgUrl(clube)}" class="detail-logo" alt="${clube.nome}" onerror="this.onerror=null; this.src='assets/clubs/${normalizeFileName(clube.nome)}.png';">
             <div>
                 <h2>${clube.nome}</h2>
                 <p class="details-meta">
-                    ${clube.cidade ? `📍 Cidade: ${clube.cidade} &bull;` : ''}
+                    ${clube.estadio?.cidade ? `📍 Cidade: ${clube.estadio.cidade} &bull;` : (clube.cidade ? `📍 Cidade: ${clube.cidade} &bull;` : '')}
                     Estádio: <span class="clickable" onclick="navigateTo('estadio', ${clube.estadio?.id})">🏟️ ${clube.estadio?.nome || '-'}</span>
                 </p>
                 ${currentUser ? `<button class="btn-favorite" onclick="definirTimeCoracao(${clube.id})">❤️ Definir como Time do Coração</button>` : ''}
@@ -642,7 +645,6 @@ function renderPlayerDetails(jogador) {
                 <h2>${jogador.nomeCompleto}</h2>
                 <p class="details-meta">
                     Apelido: <strong>${jogador.apelido || '-'}</strong> &bull;
-                    Posição: <strong>${jogador.posicao || '-'}</strong> &bull;
                     Time: <span class="clickable" onclick="navigateTo('clube', ${jogador.clube?.id})"><strong>🛡️ ${jogador.clube?.nome || '-'}</strong></span>
                 </p>
                 ${currentUser ? `<button class="btn-favorite" onclick="adicionarJogadorFavorito(${jogador.id})">⭐ Adicionar aos Favoritos</button>` : ''}
@@ -1159,7 +1161,7 @@ function renderProfileFavorites(perfil) {
         profileTeamContent.innerHTML = `
             <div class="favorite-team-card clickable" onclick="navigateTo('clube', ${perfil.clubeFavorito.id})">
                 <h4>❤️ ${perfil.clubeFavorito.nome}</h4>
-                <p>Cidade: ${perfil.clubeFavorito.cidade || '-'}</p>
+                <p>Cidade: ${perfil.clubeFavorito.estadio?.cidade || perfil.clubeFavorito.cidade || '-'}</p>
                 <p>Estádio: ${perfil.clubeFavorito.estadio?.nome || '-'}</p>
             </div>
         `;
@@ -1446,6 +1448,7 @@ function renderClubes() {
         card.onclick = () => navigateTo('clube', clube.id);
 
         const imgUrl = getClubImgUrl(clube);
+        const normalizedName = normalizeFileName(clube.nome);
 
         card.innerHTML = `
             <div class="card-header">
@@ -1453,11 +1456,11 @@ function renderClubes() {
                 <span class="badge">${clube.sigla || '---'}</span>
             </div>
             <div style="text-align: center; margin: 1rem 0;">
-                <img src="${imgUrl}" style="width: 80px; height: 80px; object-fit: contain;">
+                <img src="${imgUrl}" style="width: 80px; height: 80px; object-fit: contain;" onerror="this.onerror=null; this.src='assets/clubs/${normalizedName}.png';">
             </div>
             <div class="card-title" style="text-align: center; margin-bottom: 1rem;">${clube.nome}</div>
             <div class="card-body">
-                <p><span>📍 Cidade:</span> ${clube.cidade || '-'}</p>
+                <p><span>📍 Cidade:</span> ${clube.estadio?.cidade || clube.cidade || '-'}</p>
                 <p><span>🏟️ Estádio:</span> ${clube.estadio ? clube.estadio.nome : '-'}</p>
             </div>
         `;
